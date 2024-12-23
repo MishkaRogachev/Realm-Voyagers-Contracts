@@ -1286,7 +1286,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "realm-voyagers-contracts"
+name = "realm-voyagers"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",

@@ -1,12 +1,13 @@
 [package]
-name = "realm-voyagers-contracts"
-version = "0.1.0"
+name = "realm-voyagers"
 description = "Created with Anchor"
+version = "0.1.0"
+publish = false
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "realm_voyagers_contracts"
+name = "realm_voyagers"
 
 [features]
 default = []
