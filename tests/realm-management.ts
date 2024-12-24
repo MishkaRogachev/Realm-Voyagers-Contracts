@@ -37,14 +37,32 @@ describe("Test realm management operations ", () => {
       program.programId
     );
 
+    // Add log listener for events
+    let createEvents = [];
+    program.addEventListener("realmCreated", (event) => {
+      createEvents.push(event);
+    });
+
+    let updateEvents = [];
+    program.addEventListener("realmUpdated", (event) => {
+      updateEvents.push(event);
+    });
+
+    let deleteEvents = [];
+    program.addEventListener("realmDeleted", (event) => {
+      deleteEvents.push(event);
+    });
+
     // Create realm
-    await program.methods
+    let tx = await program.methods
       .createRealm(realmSeed, realmName, realmDescription)
       .accounts({
         realmMaster: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
+
+    await confirmTransaction(tx);
 
     // Fetch realm account
     var realmAccount = await program.account.realm.fetch(realmPDA);
@@ -55,10 +73,15 @@ describe("Test realm management operations ", () => {
     expect(realmAccount.description).to.equal(realmDescription);
     expect(realmAccount.createdAt).to.be.not.null;
 
+    // Verify the event is emitted
+    expect(createEvents.length).to.equal(1);
+    expect(createEvents[0].name).to.equal(realmName);
+    expect(createEvents[0].description).to.equal(realmDescription);
+
     // Update realm
     const updatedName = "Updated Realm";
     const updatedDescription = "An updated description";
-    await program.methods
+    tx = await program.methods
       .updateRealm(updatedName, updatedDescription)
       .accounts({
         realm: realmPDA,
@@ -67,9 +90,16 @@ describe("Test realm management operations ", () => {
       .signers([realmMaster])
       .rpc();
 
+    await confirmTransaction(tx);
+
     realmAccount = await program.account.realm.fetch(realmPDA);
     expect(realmAccount.name).to.equal(updatedName);
     expect(realmAccount.description).to.equal(updatedDescription);
+
+    // Verify the event is emitted
+    expect(updateEvents.length).to.equal(1);
+    expect(updateEvents[0].name).to.equal(updatedName);
+    expect(updateEvents[0].description).to.equal(updatedDescription);
 
 
     // // Add Locations
@@ -104,7 +134,7 @@ describe("Test realm management operations ", () => {
     //   expect(locationAccount.tilesetUrl).to.equal(location.tilesetUrl);
 
     // Delete the Realm
-    const deleteTx = await program.methods
+    tx = await program.methods
       .deleteRealm()
       .accounts({
         realm: realmPDA,
@@ -113,10 +143,15 @@ describe("Test realm management operations ", () => {
       .signers([realmMaster])
       .rpc();
 
-    await confirmTransaction(deleteTx);
+    await confirmTransaction(tx);
 
     // Verify the Realm is deleted
     const realmInfo = await provider.connection.getAccountInfo(realmPDA);
     expect(realmInfo).to.be.null; // Ensure the account no longer exists
+
+    // Verify the event is emitted
+    expect(deleteEvents.length).to.equal(1);
+    expect(deleteEvents[0].realmPubkey.toBase58()).to.equal(realmPDA.toBase58());
+
   });
 });

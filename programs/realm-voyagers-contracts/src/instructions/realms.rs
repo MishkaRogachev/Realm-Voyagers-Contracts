@@ -4,6 +4,25 @@ use crate::state::*;
 
 const REALM_SEED: &[u8] = b"realm";
 
+#[event]
+pub struct RealmCreated {
+    pub realm_pubkey: Pubkey,
+    pub name: String,
+    pub description: String,
+}
+
+#[event]
+pub struct RealmUpdated {
+    pub realm_pubkey: Pubkey,
+    pub name: String,
+    pub description: String,
+}
+
+#[event]
+pub struct RealmDeleted {
+    pub realm_pubkey: Pubkey,
+}
+
 #[derive(Accounts)]
 #[instruction(seed: String)]
 pub struct CreateRealm<'info> {
@@ -34,6 +53,13 @@ pub fn create_realm(
     realm.name = name;
     realm.description = description;
     realm.created_at = Clock::get()?.unix_timestamp;
+
+    emit!(RealmCreated {
+        realm_pubkey: realm.key(),
+        name: realm.name.clone(),
+        description: realm.description.clone(),
+    });
+
     Ok(())
 }
 
@@ -54,6 +80,13 @@ pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String
     let realm = &mut ctx.accounts.realm;
     realm.name = name;
     realm.description = description;
+
+    emit!(RealmUpdated {
+        realm_pubkey: realm.key(),
+        name: realm.name.clone(),
+        description: realm.description.clone(),
+    });
+
     Ok(())
 }
 
@@ -72,6 +105,10 @@ pub struct DeleteRealm<'info> {
     pub realm_master: Signer<'info>,
 }
 
-pub fn delete_realm(_ctx: Context<DeleteRealm>) -> Result<()> {
+pub fn delete_realm(ctx: Context<DeleteRealm>) -> Result<()> {
+    emit!(RealmDeleted {
+        realm_pubkey: ctx.accounts.realm.key(),
+    });
+
     Ok(())
 }
