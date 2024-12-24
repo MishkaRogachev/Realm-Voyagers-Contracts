@@ -3,20 +3,21 @@ import { Program } from "@coral-xyz/anchor";
 import { RealmVoyagers } from "../target/types/realm_voyagers";
 import { expect } from "chai";
 
-async function airdrop(provider: anchor.AnchorProvider, publicKey: anchor.web3.PublicKey, lamports: number) {
-  const airdropSignature = await provider.connection.requestAirdrop(publicKey, lamports);
-  const latestBlockHash = await provider.connection.getLatestBlockhash();
-
-  await provider.connection.confirmTransaction({
-    blockhash: latestBlockHash.blockhash,
-    lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-    signature: airdropSignature,
-  });
-
-  console.log(`Airdropped ${lamports / anchor.web3.LAMPORTS_PER_SOL} SOL to: ${publicKey.toBase58()}`);
+async function airdrop(publicKey: anchor.web3.PublicKey, lamports: number) {
+  let airdropTx = await anchor.getProvider().connection.requestAirdrop(publicKey, lamports);
+  await confirmTransaction(airdropTx);
 }
 
-describe("Test realm CRUD operations ", () => {
+async function confirmTransaction(tx: string) {
+  const latestBlockHash = await anchor.getProvider().connection.getLatestBlockhash();
+  await anchor.getProvider().connection.confirmTransaction({
+    blockhash: latestBlockHash.blockhash,
+    lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+    signature: tx,
+  });
+}
+
+describe("Test realm management operations ", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -25,32 +26,51 @@ describe("Test realm CRUD operations ", () => {
   const realmMaster = anchor.web3.Keypair.generate();
 
   it("Create realm, add some locations and delete", async () => {
-    await airdrop(provider, realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
 
-    // Create realm
+    // Realm data & PDA prediction
+    const realmSeed = "seed";
     const realmName = "Test Realm";
+    const realmDescription = "A test realm for the unit tests";
     const [realmPDA, _] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("realm"), realmMaster.publicKey.toBuffer()],
+      [Buffer.from("realm"), realmMaster.publicKey.toBuffer(), Buffer.from(realmSeed)],
       program.programId
     );
 
-    const tx = await program.methods
-      .createRealm(realmName)
+    // Create realm
+    await program.methods
+      .createRealm(realmSeed, realmName, realmDescription)
       .accounts({
         realmMaster: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
-    console.log("Transaction signature:", tx);
 
-    // // Fetch realm account
-    // const realmAccount = await program.account.realm.fetch(realmPDA);
-    // console.log("Realm account:", realmAccount);
+    // Fetch realm account
+    var realmAccount = await program.account.realm.fetch(realmPDA);
 
-    // // Assertions
-    // expect(realmAccount.realmMaster.toBase58()).to.equal(realmMaster.publicKey.toBase58());
-    // expect(realmAccount.name).to.equal(realmName);
-    // console.log(`Realm created: ${realmAccount.name}`);
+    // Assertions
+    expect(realmAccount.realmMaster.toBase58()).to.equal(realmMaster.publicKey.toBase58());
+    expect(realmAccount.name).to.equal(realmName);
+    expect(realmAccount.description).to.equal(realmDescription);
+    expect(realmAccount.createdAt).to.be.not.null;
+
+    // Update realm
+    const updatedName = "Updated Realm";
+    const updatedDescription = "An updated description";
+    await program.methods
+      .updateRealm(updatedName, updatedDescription)
+      .accounts({
+        realm: realmPDA,
+        realmMaster: realmMaster.publicKey,
+      })
+      .signers([realmMaster])
+      .rpc();
+
+    realmAccount = await program.account.realm.fetch(realmPDA);
+    expect(realmAccount.name).to.equal(updatedName);
+    expect(realmAccount.description).to.equal(updatedDescription);
+
 
     // // Add Locations
     // const locations = [
@@ -83,19 +103,20 @@ describe("Test realm CRUD operations ", () => {
     //   expect(locationAccount.tilemapUrl).to.equal(location.tilemapUrl);
     //   expect(locationAccount.tilesetUrl).to.equal(location.tilesetUrl);
 
-    //   // Delete the Realm
-    //   const deleteTx = await program.methods
-    //     .deleteRealm()
-    //     .accounts({
-    //       realm: realmPDA,
-    //       master: realmMaster.publicKey,
-    //     })
-    //     .signers([realmMaster])
-    //     .rpc();
+    // Delete the Realm
+    const deleteTx = await program.methods
+      .deleteRealm()
+      .accounts({
+        realm: realmPDA,
+        realmMaster: realmMaster.publicKey,
+      })
+      .signers([realmMaster])
+      .rpc();
 
-    //     console.log("Realm and all locations deleted, transaction signature:", deleteTx);
+    await confirmTransaction(deleteTx);
 
-    //     // TODO: Verify Realm is deleted
-    // }
+    // Verify the Realm is deleted
+    const realmInfo = await provider.connection.getAccountInfo(realmPDA);
+    expect(realmInfo).to.be.null; // Ensure the account no longer exists
   });
 });

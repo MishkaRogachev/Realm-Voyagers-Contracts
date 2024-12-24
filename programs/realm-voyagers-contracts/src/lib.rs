@@ -12,12 +12,21 @@ use instructions::*;
 pub mod realm_voyagers {
     use super::*;
 
-    pub fn create_realm(ctx: Context<CreateRealm>, name: String) -> Result<()> {
-        realms::create_realm(ctx, name)
+    pub fn create_realm(
+        ctx: Context<CreateRealm>,
+        seed: String,
+        name: String,
+        description: String,
+    ) -> Result<()> {
+        realms::create_realm(ctx, seed, name, description)
     }
 
-    pub fn update_realm(ctx: Context<UpdateRealm>, name: String) -> Result<()> {
-        realms::update_realm(ctx, name)
+    pub fn update_realm(
+        ctx: Context<UpdateRealm>,
+        name: String,
+        description: String,
+    ) -> Result<()> {
+        realms::update_realm(ctx, name, description)
     }
 
     pub fn delete_realm(ctx: Context<DeleteRealm>) -> Result<()> {
