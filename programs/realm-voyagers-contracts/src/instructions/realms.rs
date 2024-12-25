@@ -4,22 +4,16 @@ use crate::state::*;
 
 const REALM_SEED: &[u8] = b"realm";
 
-#[event]
-pub struct RealmCreated {
-    pub realm_pubkey: Pubkey,
-    pub name: String,
-    pub description: String,
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum RealmEventType {
+    Created { name: String, description: String },
+    Updated { name: String, description: String },
+    Deleted {},
 }
 
 #[event]
-pub struct RealmUpdated {
-    pub realm_pubkey: Pubkey,
-    pub name: String,
-    pub description: String,
-}
-
-#[event]
-pub struct RealmDeleted {
+pub struct RealmEvent {
+    pub event_type: RealmEventType,
     pub realm_pubkey: Pubkey,
 }
 
@@ -50,14 +44,13 @@ pub fn create_realm(
     let realm = &mut ctx.accounts.realm;
     realm.realm_master = ctx.accounts.realm_master.key();
     realm.seed = seed;
-    realm.name = name;
-    realm.description = description;
+    realm.name = name.clone();
+    realm.description = description.clone();
     realm.created_at = Clock::get()?.unix_timestamp;
 
-    emit!(RealmCreated {
+    emit!(RealmEvent {
         realm_pubkey: realm.key(),
-        name: realm.name.clone(),
-        description: realm.description.clone(),
+        event_type: RealmEventType::Created { name, description }
     });
 
     Ok(())
@@ -78,13 +71,12 @@ pub struct UpdateRealm<'info> {
 
 pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
-    realm.name = name;
-    realm.description = description;
+    realm.name = name.clone();
+    realm.description = description.clone();
 
-    emit!(RealmUpdated {
+    emit!(RealmEvent {
         realm_pubkey: realm.key(),
-        name: realm.name.clone(),
-        description: realm.description.clone(),
+        event_type: RealmEventType::Updated { name, description }
     });
 
     Ok(())
@@ -106,8 +98,9 @@ pub struct DeleteRealm<'info> {
 }
 
 pub fn delete_realm(ctx: Context<DeleteRealm>) -> Result<()> {
-    emit!(RealmDeleted {
+    emit!(RealmEvent {
         realm_pubkey: ctx.accounts.realm.key(),
+        event_type: RealmEventType::Deleted {}
     });
 
     Ok(())
