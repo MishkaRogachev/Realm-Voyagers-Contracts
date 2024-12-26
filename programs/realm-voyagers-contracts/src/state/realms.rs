@@ -1,3 +1,4 @@
+use crate::constants::*;
 use anchor_lang::prelude::*;
 
 #[account]
@@ -5,13 +6,13 @@ use anchor_lang::prelude::*;
 pub struct Realm {
     pub realm_master: Pubkey,
 
-    #[max_len(32)]
+    #[max_len(MAX_SEED_LEN)]
     pub seed: String,
 
-    #[max_len(32)]
+    #[max_len(MAX_NAME_LEN)]
     pub name: String,
 
-    #[max_len(128)]
+    #[max_len(MAX_DESCRIPTION_LEN)]
     pub description: String,
 
     pub created_at: i64,

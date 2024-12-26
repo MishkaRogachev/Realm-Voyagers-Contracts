@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::constants::*;
+use crate::errors::ErrorCode;
 use crate::state::*;
 
 const REALM_SEED: &[u8] = b"realm";
@@ -41,6 +43,13 @@ pub fn create_realm(
     name: String,
     description: String,
 ) -> Result<()> {
+    require!(seed.len() <= MAX_SEED_LEN, ErrorCode::SeedTooLong);
+    require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
+    require!(
+        description.len() <= MAX_DESCRIPTION_LEN,
+        ErrorCode::DescriptionTooLong
+    );
+
     let realm = &mut ctx.accounts.realm;
     realm.realm_master = ctx.accounts.realm_master.key();
     realm.seed = seed;
@@ -70,6 +79,12 @@ pub struct UpdateRealm<'info> {
 }
 
 pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String) -> Result<()> {
+    require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
+    require!(
+        description.len() <= MAX_DESCRIPTION_LEN,
+        ErrorCode::DescriptionTooLong
+    );
+
     let realm = &mut ctx.accounts.realm;
     realm.name = name.clone();
     realm.description = description.clone();
