@@ -37,7 +37,7 @@ describe("Manage several realms", () => {
     let tx = await program.methods
       .createRealm(firstRealmSeed, firstRealmName, firstRealmDescription)
       .accounts({
-        realmMaster: realmMaster.publicKey,
+        master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
@@ -48,22 +48,21 @@ describe("Manage several realms", () => {
     var realmAccount = await program.account.realm.fetch(firstRealmPDA);
 
     // Assertions for the first realm
-    expect(realmAccount.realmMaster.toBase58()).to.equal(realmMaster.publicKey.toBase58());
     expect(realmAccount.name).to.equal(firstRealmName);
     expect(realmAccount.description).to.equal(firstRealmDescription);
     expect(realmAccount.createdAt).to.be.not.null;
 
     // Verify the first realm event is emitted
     expect(events.length).to.equal(1);
-    expect(events[0].eventType.created.name).to.equal(firstRealmName);
-    expect(events[0].eventType.created.description).to.equal(firstRealmDescription);
+    expect(events[0].eventType.realmCreated.name).to.equal(firstRealmName);
+    expect(events[0].eventType.realmCreated.description).to.equal(firstRealmDescription);
     expect(events[0].realmPubkey.toBase58()).to.equal(firstRealmPDA.toBase58());
 
     // Create second realm
     tx = await program.methods
       .createRealm(secondRealmSeed, secondRealmName, secondRealmDescription)
       .accounts({
-        realmMaster: realmMaster.publicKey,
+        master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
@@ -74,15 +73,14 @@ describe("Manage several realms", () => {
     realmAccount = await program.account.realm.fetch(secondRealmPDA);
 
     // Assertions for the second realm
-    expect(realmAccount.realmMaster.toBase58()).to.equal(realmMaster.publicKey.toBase58());
     expect(realmAccount.name).to.equal(secondRealmName);
     expect(realmAccount.description).to.equal(secondRealmDescription);
     expect(realmAccount.createdAt).to.be.not.null;
 
     // Verify the second realm event is emitted
     expect(events.length).to.equal(2);
-    expect(events[1].eventType.created.name).to.equal(secondRealmName);
-    expect(events[1].eventType.created.description).to.equal(secondRealmDescription);
+    expect(events[1].eventType.realmCreated.name).to.equal(secondRealmName);
+    expect(events[1].eventType.realmCreated.description).to.equal(secondRealmDescription);
     expect(events[1].realmPubkey.toBase58()).to.equal(secondRealmPDA.toBase58());
 
     // Update first realm
@@ -92,7 +90,7 @@ describe("Manage several realms", () => {
       .updateRealm(updatedName, updatedDescription)
       .accounts({
         realm: firstRealmPDA,
-        realmMaster: realmMaster.publicKey,
+        master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
@@ -105,8 +103,8 @@ describe("Manage several realms", () => {
 
     // Verify the update event is emitted
     expect(events.length).to.equal(3);
-    expect(events[2].eventType.updated.name).to.equal(updatedName);
-    expect(events[2].eventType.updated.description).to.equal(updatedDescription);
+    expect(events[2].eventType.realmUpdated.name).to.equal(updatedName);
+    expect(events[2].eventType.realmUpdated.description).to.equal(updatedDescription);
     expect(events[2].realmPubkey.toBase58()).to.equal(firstRealmPDA.toBase58());
 
     // Verify second realm is still the same
@@ -119,7 +117,7 @@ describe("Manage several realms", () => {
       .deleteRealm()
       .accounts({
         realm: firstRealmPDA,
-        realmMaster: realmMaster.publicKey,
+        master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
@@ -144,7 +142,7 @@ describe("Manage several realms", () => {
       .deleteRealm()
       .accounts({
         realm: secondRealmPDA,
-        realmMaster: realmMaster.publicKey,
+        master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();

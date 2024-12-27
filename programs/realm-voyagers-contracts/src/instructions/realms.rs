@@ -8,9 +8,9 @@ const REALM_SEED: &[u8] = b"realm";
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum RealmEventType {
-    Created { name: String, description: String },
-    Updated { name: String, description: String },
-    Deleted {},
+    RealmCreated { name: String, description: String },
+    RealmUpdated { name: String, description: String },
+    RealmDeleted {},
 }
 
 #[event]
@@ -24,42 +24,33 @@ pub struct RealmEvent {
 pub struct CreateRealm<'info> {
     #[account(
         init,
-        payer = realm_master,
+        payer = master,
         space = 8 + Realm::INIT_SPACE,
-        seeds = [REALM_SEED, realm_master.key().as_ref(), seed.as_bytes()],
+        seeds = [REALM_SEED, master.key().as_ref(), seed.as_bytes()],
         bump
     )]
     pub realm: Account<'info, Realm>,
 
     #[account(mut)]
-    pub realm_master: Signer<'info>,
+    pub master: Signer<'info>,
 
     pub system_program: Program<'info, System>,
 }
 
 pub fn create_realm(
     ctx: Context<CreateRealm>,
-    seed: String,
+    _seed: String,
     name: String,
     description: String,
 ) -> Result<()> {
-    require!(seed.len() <= MAX_SEED_LEN, ErrorCode::SeedTooLong);
-    require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
-    require!(
-        description.len() <= MAX_DESCRIPTION_LEN,
-        ErrorCode::DescriptionTooLong
-    );
-
     let realm = &mut ctx.accounts.realm;
-    realm.realm_master = ctx.accounts.realm_master.key();
-    realm.seed = seed;
     realm.name = name.clone();
     realm.description = description.clone();
     realm.created_at = Clock::get()?.unix_timestamp;
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
-        event_type: RealmEventType::Created { name, description }
+        event_type: RealmEventType::RealmCreated { name, description },
     });
 
     Ok(())
@@ -67,15 +58,11 @@ pub fn create_realm(
 
 #[derive(Accounts)]
 pub struct UpdateRealm<'info> {
-    #[account(
-        mut,
-        has_one = realm_master,
-        seeds = [REALM_SEED, realm_master.key().as_ref(), realm.seed.as_bytes()],
-        bump
-    )]
+    #[account(mut)]
     pub realm: Account<'info, Realm>,
 
-    pub realm_master: Signer<'info>,
+    #[account(mut)]
+    pub master: Signer<'info>,
 }
 
 pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String) -> Result<()> {
@@ -91,7 +78,7 @@ pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
-        event_type: RealmEventType::Updated { name, description }
+        event_type: RealmEventType::RealmUpdated { name, description },
     });
 
     Ok(())
@@ -99,23 +86,17 @@ pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String
 
 #[derive(Accounts)]
 pub struct DeleteRealm<'info> {
-    #[account(
-        mut,
-        close = realm_master,
-        has_one = realm_master,
-        seeds = [REALM_SEED, realm_master.key().as_ref(), realm.seed.as_bytes()],
-        bump
-    )]
+    #[account(mut, close = master)]
     pub realm: Account<'info, Realm>,
 
     #[account(mut)]
-    pub realm_master: Signer<'info>,
+    pub master: Signer<'info>,
 }
 
 pub fn delete_realm(ctx: Context<DeleteRealm>) -> Result<()> {
     emit!(RealmEvent {
         realm_pubkey: ctx.accounts.realm.key(),
-        event_type: RealmEventType::Deleted {}
+        event_type: RealmEventType::RealmDeleted {},
     });
 
     Ok(())

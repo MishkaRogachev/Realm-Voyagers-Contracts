@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Seed is too long")]
-    SeedTooLong,
+    #[msg("Unauthorized realm master")]
+    UnauthorizedRealmMaster,
 
     #[msg("Name is too long")]
     NameTooLong,
