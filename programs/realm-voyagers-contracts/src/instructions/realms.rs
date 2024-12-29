@@ -190,6 +190,112 @@ pub fn add_realm_master(
     Ok(())
 }
 
+#[derive(Accounts)]
+#[instruction(id: String)]
+pub struct RemoveRealmMaster<'info> {
+    #[account(
+        mut,
+        seeds = [REALM_SEED, id.as_bytes()],
+        bump,
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(mut)]
+    pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+pub fn remove_realm_master(
+    ctx: Context<RemoveRealmMaster>,
+    _id: String,
+    master_pubkey: Pubkey,
+) -> Result<()> {
+    let realm = &mut ctx.accounts.realm;
+
+    require!(
+        has_role(
+            realm,
+            ctx.accounts.master.key(),
+            vec![RealmMasterRole::Owner]
+        ),
+        ErrorCode::UnauthorizedRealmMaster
+    );
+
+    require!(
+        realm
+            .masters
+            .iter()
+            .any(|master| master.pubkey == master_pubkey),
+        ErrorCode::RealmMasterNotFound
+    );
+
+    require!(
+        !realm.masters.contains(&RealmMaster {
+            pubkey: master_pubkey,
+            role: RealmMasterRole::Owner
+        }),
+        ErrorCode::CantRemoveRealmOwner
+    );
+
+    realm
+        .masters
+        .retain(|master| master.pubkey != master_pubkey);
+
+    Ok(())
+}
+
+#[derive(Accounts)]
+#[instruction(id: String)]
+pub struct TransferRealmOwnership<'info> {
+    #[account(
+        mut,
+        seeds = [REALM_SEED, id.as_bytes()],
+        bump,
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(mut)]
+    pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+pub fn transfer_realm_ownership(
+    ctx: Context<TransferRealmOwnership>,
+    _id: String,
+    new_owner_pubkey: Pubkey,
+) -> Result<()> {
+    let realm = &mut ctx.accounts.realm;
+
+    require!(
+        has_role(
+            realm,
+            ctx.accounts.master.key(),
+            vec![RealmMasterRole::Owner]
+        ),
+        ErrorCode::UnauthorizedRealmMaster
+    );
+
+    require!(
+        realm
+            .masters
+            .iter()
+            .any(|master| master.pubkey == new_owner_pubkey),
+        ErrorCode::RealmMasterNotFound
+    );
+
+    realm.masters.iter_mut().for_each(|master| {
+        if master.pubkey == new_owner_pubkey {
+            master.role = RealmMasterRole::Owner;
+        } else if master.pubkey == *ctx.accounts.master.key {
+            master.role = RealmMasterRole::Admin;
+        }
+    });
+
+    Ok(())
+}
+
 fn has_role(realm: &Realm, pubkey: Pubkey, roles: Vec<RealmMasterRole>) -> bool {
     realm
         .masters

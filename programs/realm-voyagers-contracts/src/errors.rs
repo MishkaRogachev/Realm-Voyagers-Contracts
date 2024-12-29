@@ -5,6 +5,12 @@ pub enum ErrorCode {
     #[msg("Unauthorized realm master")]
     UnauthorizedRealmMaster,
 
+    #[msg("Cant remove realm owner")]
+    CantRemoveRealmOwner,
+
+    #[msg("Realm master not found")]
+    RealmMasterNotFound,
+
     #[msg("Name is too long")]
     NameTooLong,
 

@@ -42,4 +42,20 @@ pub mod realm_voyagers {
     ) -> Result<()> {
         realms::add_realm_master(ctx, id, new_master_pubkey)
     }
+
+    pub fn remove_realm_master(
+        ctx: Context<RemoveRealmMaster>,
+        id: String,
+        master_pubkey: Pubkey,
+    ) -> Result<()> {
+        realms::remove_realm_master(ctx, id, master_pubkey)
+    }
+
+    pub fn transfer_realm_ownership(
+        ctx: Context<TransferRealmOwnership>,
+        id: String,
+        new_owner_pubkey: Pubkey,
+    ) -> Result<()> {
+        realms::transfer_realm_ownership(ctx, id, new_owner_pubkey)
+    }
 }

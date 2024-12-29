@@ -22,6 +22,8 @@ describe("Manage several realms", () => {
     const realmDescription = "A test realm";
     const updatedRealmName = "Updated Realm Name";
     const updatedRealmDescription = "Updated Realm Description";
+    const updatedRealmName2 = "Updated Realm Name 2";
+    const updatedRealmDescription2 = "Updated Realm Description 2";
 
     // Realm PDA
     const realmPDA = getRealmPDA(realmId, program);
@@ -71,9 +73,9 @@ describe("Manage several realms", () => {
     realmAccount = await program.account.realm.fetch(realmPDA);
     expect(realmAccount.name).to.equal(updatedRealmName);
     expect(realmAccount.description).to.equal(updatedRealmDescription);
-    realmAccount.masters.length = 1;
-    realmAccount.masters[0].pubkey = alice.publicKey;
-    realmAccount.masters[0].role = { owner: {} };
+    expect(realmAccount.masters.length).to.equal(1);
+    expect(realmAccount.masters[0].pubkey.toBase58()).to.equal(alice.publicKey.toBase58());
+    expect(realmAccount.masters[0].role).to.deep.equal({ owner: {} });
 
     // Bob tries to add himself as a realm master, and it fails
     try {
@@ -98,10 +100,104 @@ describe("Manage several realms", () => {
 
     // Fetch & check realm account after adding Bob as a realm master
     realmAccount = await program.account.realm.fetch(realmPDA);
-    realmAccount.masters.length = 2;
-    realmAccount.masters[0].pubkey = alice.publicKey;
-    realmAccount.masters[0].role = { owner: {} };
-    realmAccount.masters[1].pubkey = bob.publicKey;
-    realmAccount.masters[1].role = { admin: {} };
+    expect(realmAccount.masters.length).to.equal(2);
+    expect(realmAccount.masters[0].pubkey.toBase58()).to.equal(alice.publicKey.toBase58());
+    expect(realmAccount.masters[0].role).to.deep.equal({ owner: {} });
+    expect(realmAccount.masters[1].pubkey.toBase58()).to.equal(bob.publicKey.toBase58());
+    expect(realmAccount.masters[1].role).to.deep.equal({ admin: {} });
+
+    // Bob tries to update the realm successfully
+    tx = await program.methods
+      .updateRealm(realmId, updatedRealmName2, updatedRealmDescription2)
+      .accounts({ master: bob.publicKey })
+      .signers([bob])
+      .rpc();
+    await confirmTransaction(tx);
+
+    // Fetch & check realm account after Bob's update
+    realmAccount = await program.account.realm.fetch(realmPDA);
+    expect(realmAccount.name).to.equal(updatedRealmName2);
+    expect(realmAccount.description).to.equal(updatedRealmDescription2);
+
+    // Bob tries to transfer ownership to himself, and it fails
+    try {
+      tx = await program.methods
+        .transferRealmOwnership(realmId, bob.publicKey)
+        .accounts({ master: bob.publicKey })
+        .signers([bob])
+        .rpc();
+      await confirmTransaction(tx);
+      expect.fail("Bob should not be authorized to transfer realm ownership");
+    } catch (err) {
+      expect(err.message).to.include("UnauthorizedRealmMaster");
+    }
+
+    // Fetch & check realm account after failed ownership transfer
+    realmAccount = await program.account.realm.fetch(realmPDA);
+    expect(realmAccount.masters.length).to.equal(2);
+    expect(realmAccount.masters[0].pubkey.toBase58()).to.equal(alice.publicKey.toBase58());
+    expect(realmAccount.masters[0].role).to.deep.equal({ owner: {} });
+    expect(realmAccount.masters[1].pubkey.toBase58()).to.equal(bob.publicKey.toBase58());
+    expect(realmAccount.masters[1].role).to.deep.equal({ admin: {} });
+
+
+    // Alice transfers ownership to Bob
+    tx = await program.methods
+      .transferRealmOwnership(realmId, bob.publicKey)
+      .accounts({ master: alice.publicKey })
+      .signers([alice])
+      .rpc();
+    await confirmTransaction(tx);
+
+    // Fetch & check realm account after ownership transfer
+    realmAccount = await program.account.realm.fetch(realmPDA);
+    expect(realmAccount.masters.length).to.equal(2);
+    expect(realmAccount.masters[0].pubkey.toBase58()).to.equal(alice.publicKey.toBase58());
+    expect(realmAccount.masters[0].role).to.deep.equal({ admin: {} });
+    expect(realmAccount.masters[1].pubkey.toBase58()).to.equal(bob.publicKey.toBase58());
+    expect(realmAccount.masters[1].role).to.deep.equal({ owner: {} });
+
+    // Bob removes Alice as a realm master
+    tx = await program.methods
+      .removeRealmMaster(realmId, alice.publicKey)
+      .accounts({ master: bob.publicKey })
+      .signers([bob])
+      .rpc();
+    await confirmTransaction(tx);
+
+    // Fetch & check realm account after removing Alice as a realm master
+    realmAccount = await program.account.realm.fetch(realmPDA);
+    expect(realmAccount.masters.length).to.equal(1);
+    expect(realmAccount.masters[0].pubkey.toBase58()).to.equal(bob.publicKey.toBase58());
+    expect(realmAccount.masters[0].role).to.deep.equal({ owner: {} });
+
+    // Alice tries to update the realm, and it fails
+    try {
+      tx = await program.methods
+        .updateRealm(realmId, "Unauthorized Update", "Should Fail")
+        .accounts({ master: alice.publicKey })
+        .signers([alice])
+        .rpc();
+      await confirmTransaction(tx);
+      expect.fail("Alice should not be authorized to update the realm");
+    } catch (err) {
+      expect(err.message).to.include("UnauthorizedRealmMaster");
+    }
+
+    // Bob deletes the realm
+    tx = await program.methods
+      .deleteRealm(realmId)
+      .accounts({ master: bob.publicKey })
+      .signers([bob])
+      .rpc();
+    await confirmTransaction(tx);
+
+    // Try to fetch realm account after deletion
+    try {
+      realmAccount = await program.account.realm.fetch(realmPDA);
+      expect.fail("Realm account should have been deleted");
+    } catch (err) {
+      expect(err.message).to.include("Account does not exist");
+    }
   });
 });
