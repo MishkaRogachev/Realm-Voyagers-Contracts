@@ -16,16 +16,16 @@ describe("Manage several realms", () => {
     await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
 
     // Realm datas
-    const firstRealmSeed = "seed_1";
-    const secondRealmSeed = "seed_2";
+    const firstRealmId = "realm_id_1";
+    const secondRealmId = "realm_id_2";
     const firstRealmName = "Test Realm 1";
     const secondRealmName = "Test Realm 2";
     const firstRealmDescription = "A test realm";
     const secondRealmDescription = "Another test realm";
 
     // Realm PDAs
-    const firstRealmPDA = getRealmPDA(realmMaster.publicKey, firstRealmSeed, program);
-    const secondRealmPDA = getRealmPDA(realmMaster.publicKey, secondRealmSeed, program);
+    const firstRealmPDA = getRealmPDA(realmMaster.publicKey, firstRealmId, program);
+    const secondRealmPDA = getRealmPDA(realmMaster.publicKey, secondRealmId, program);
 
     // Add log listeners for events
     let events = [];
@@ -35,7 +35,7 @@ describe("Manage several realms", () => {
 
     // Create first realm
     let tx = await program.methods
-      .createRealm(firstRealmSeed, firstRealmName, firstRealmDescription)
+      .createRealm(firstRealmId, firstRealmName, firstRealmDescription)
       .accounts({
         master: realmMaster.publicKey,
       })
@@ -60,7 +60,7 @@ describe("Manage several realms", () => {
 
     // Create second realm
     tx = await program.methods
-      .createRealm(secondRealmSeed, secondRealmName, secondRealmDescription)
+      .createRealm(secondRealmId, secondRealmName, secondRealmDescription)
       .accounts({
         master: realmMaster.publicKey,
       })
@@ -87,11 +87,8 @@ describe("Manage several realms", () => {
     const updatedName = "Updated Realm";
     const updatedDescription = "An updated description";
     tx = await program.methods
-      .updateRealm(updatedName, updatedDescription)
-      .accounts({
-        realm: firstRealmPDA,
-        master: realmMaster.publicKey,
-      })
+      .updateRealm(firstRealmId, updatedName, updatedDescription)
+      .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
 
@@ -114,11 +111,8 @@ describe("Manage several realms", () => {
 
     // Delete the first realm
     tx = await program.methods
-      .deleteRealm()
-      .accounts({
-        realm: firstRealmPDA,
-        master: realmMaster.publicKey,
-      })
+      .deleteRealm(firstRealmId)
+      .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
 
@@ -139,11 +133,8 @@ describe("Manage several realms", () => {
 
     // Delete the second realm
     tx = await program.methods
-      .deleteRealm()
-      .accounts({
-        realm: secondRealmPDA,
-        master: realmMaster.publicKey,
-      })
+      .deleteRealm(secondRealmId)
+      .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
 

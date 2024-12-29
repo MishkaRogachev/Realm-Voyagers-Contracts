@@ -15,22 +15,23 @@ pub mod realm_voyagers {
 
     pub fn create_realm(
         ctx: Context<CreateRealm>,
-        seed: String,
+        id: String,
         name: String,
         description: String,
     ) -> Result<()> {
-        realms::create_realm(ctx, seed, name, description)
+        realms::create_realm(ctx, id, name, description)
     }
 
     pub fn update_realm(
         ctx: Context<UpdateRealm>,
+        id: String,
         name: String,
         description: String,
     ) -> Result<()> {
-        realms::update_realm(ctx, name, description)
+        realms::update_realm(ctx, id, name, description)
     }
 
-    pub fn delete_realm(ctx: Context<DeleteRealm>) -> Result<()> {
-        realms::delete_realm(ctx)
+    pub fn delete_realm(ctx: Context<DeleteRealm>, id: String) -> Result<()> {
+        realms::delete_realm(ctx, id)
     }
 }

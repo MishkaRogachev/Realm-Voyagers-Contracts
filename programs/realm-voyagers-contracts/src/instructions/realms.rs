@@ -20,13 +20,13 @@ pub struct RealmEvent {
 }
 
 #[derive(Accounts)]
-#[instruction(seed: String)]
+#[instruction(id: String)]
 pub struct CreateRealm<'info> {
     #[account(
         init,
         payer = master,
         space = 8 + Realm::INIT_SPACE,
-        seeds = [REALM_SEED, master.key().as_ref(), seed.as_bytes()],
+        seeds = [REALM_SEED, master.key().as_ref(), id.as_bytes()],
         bump
     )]
     pub realm: Account<'info, Realm>,
@@ -39,7 +39,7 @@ pub struct CreateRealm<'info> {
 
 pub fn create_realm(
     ctx: Context<CreateRealm>,
-    _seed: String,
+    _id: String,
     name: String,
     description: String,
 ) -> Result<()> {
@@ -57,15 +57,30 @@ pub fn create_realm(
 }
 
 #[derive(Accounts)]
+#[instruction(id: String)]
 pub struct UpdateRealm<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [REALM_SEED, master.key().as_ref(), id.as_bytes()],
+        bump,
+        realloc = 8 + Realm::INIT_SPACE,
+        realloc::payer = master,
+        realloc::zero = true
+    )]
     pub realm: Account<'info, Realm>,
 
     #[account(mut)]
     pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
 }
 
-pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String) -> Result<()> {
+pub fn update_realm(
+    ctx: Context<UpdateRealm>,
+    _id: String,
+    name: String,
+    description: String,
+) -> Result<()> {
     require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
     require!(
         description.len() <= MAX_DESCRIPTION_LEN,
@@ -85,15 +100,23 @@ pub fn update_realm(ctx: Context<UpdateRealm>, name: String, description: String
 }
 
 #[derive(Accounts)]
+#[instruction(id: String)]
 pub struct DeleteRealm<'info> {
-    #[account(mut, close = master)]
+    #[account(
+        mut,
+        seeds = [REALM_SEED, master.key().as_ref(), id.as_bytes()],
+        bump,
+        close = master,
+    )]
     pub realm: Account<'info, Realm>,
 
     #[account(mut)]
     pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
 }
 
-pub fn delete_realm(ctx: Context<DeleteRealm>) -> Result<()> {
+pub fn delete_realm(ctx: Context<DeleteRealm>, _id: String) -> Result<()> {
     emit!(RealmEvent {
         realm_pubkey: ctx.accounts.realm.key(),
         event_type: RealmEventType::RealmDeleted {},
