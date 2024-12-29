@@ -24,8 +24,8 @@ describe("Manage several realms", () => {
     const secondRealmDescription = "Another test realm";
 
     // Realm PDAs
-    const firstRealmPDA = getRealmPDA(realmMaster.publicKey, firstRealmId, program);
-    const secondRealmPDA = getRealmPDA(realmMaster.publicKey, secondRealmId, program);
+    const firstRealmPDA = getRealmPDA(firstRealmId, program);
+    const secondRealmPDA = getRealmPDA(secondRealmId, program);
 
     // Add log listeners for events
     let events = [];
@@ -36,12 +36,9 @@ describe("Manage several realms", () => {
     // Create first realm
     let tx = await program.methods
       .createRealm(firstRealmId, firstRealmName, firstRealmDescription)
-      .accounts({
-        master: realmMaster.publicKey,
-      })
+      .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
-
     await confirmTransaction(tx);
 
     // Fetch first realm account
@@ -61,12 +58,9 @@ describe("Manage several realms", () => {
     // Create second realm
     tx = await program.methods
       .createRealm(secondRealmId, secondRealmName, secondRealmDescription)
-      .accounts({
-        master: realmMaster.publicKey,
-      })
+      .accounts({ master: realmMaster.publicKey})
       .signers([realmMaster])
       .rpc();
-
     await confirmTransaction(tx);
 
     // Fetch second realm account
@@ -91,7 +85,6 @@ describe("Manage several realms", () => {
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
-
     await confirmTransaction(tx);
 
     realmAccount = await program.account.realm.fetch(firstRealmPDA);
@@ -115,7 +108,6 @@ describe("Manage several realms", () => {
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
-
     await confirmTransaction(tx);
 
     // Verify the first realm is deleted
@@ -137,7 +129,6 @@ describe("Manage several realms", () => {
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
-
     await confirmTransaction(tx);
 
     // Verify the second realm is deleted

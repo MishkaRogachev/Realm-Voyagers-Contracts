@@ -34,4 +34,12 @@ pub mod realm_voyagers {
     pub fn delete_realm(ctx: Context<DeleteRealm>, id: String) -> Result<()> {
         realms::delete_realm(ctx, id)
     }
+
+    pub fn add_realm_master(
+        ctx: Context<AddRealmMaster>,
+        id: String,
+        new_master_pubkey: Pubkey,
+    ) -> Result<()> {
+        realms::add_realm_master(ctx, id, new_master_pubkey)
+    }
 }

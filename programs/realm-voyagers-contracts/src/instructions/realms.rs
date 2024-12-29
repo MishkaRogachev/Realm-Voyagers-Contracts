@@ -26,7 +26,7 @@ pub struct CreateRealm<'info> {
         init,
         payer = master,
         space = 8 + Realm::INIT_SPACE,
-        seeds = [REALM_SEED, master.key().as_ref(), id.as_bytes()],
+        seeds = [REALM_SEED, id.as_bytes()],
         bump
     )]
     pub realm: Account<'info, Realm>,
@@ -47,6 +47,10 @@ pub fn create_realm(
     realm.name = name.clone();
     realm.description = description.clone();
     realm.created_at = Clock::get()?.unix_timestamp;
+    realm.masters.push(RealmMaster {
+        pubkey: *ctx.accounts.master.key,
+        role: RealmMasterRole::Owner,
+    });
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
@@ -61,7 +65,7 @@ pub fn create_realm(
 pub struct UpdateRealm<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, master.key().as_ref(), id.as_bytes()],
+        seeds = [REALM_SEED, id.as_bytes()],
         bump,
         realloc = 8 + Realm::INIT_SPACE,
         realloc::payer = master,
@@ -88,6 +92,16 @@ pub fn update_realm(
     );
 
     let realm = &mut ctx.accounts.realm;
+
+    require!(
+        has_role(
+            realm,
+            ctx.accounts.master.key(),
+            vec![RealmMasterRole::Owner, RealmMasterRole::Admin]
+        ),
+        ErrorCode::UnauthorizedRealmMaster
+    );
+
     realm.name = name.clone();
     realm.description = description.clone();
 
@@ -104,7 +118,7 @@ pub fn update_realm(
 pub struct DeleteRealm<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, master.key().as_ref(), id.as_bytes()],
+        seeds = [REALM_SEED, id.as_bytes()],
         bump,
         close = master,
     )]
@@ -117,10 +131,68 @@ pub struct DeleteRealm<'info> {
 }
 
 pub fn delete_realm(ctx: Context<DeleteRealm>, _id: String) -> Result<()> {
+    let realm = &mut ctx.accounts.realm;
+
+    require!(
+        has_role(
+            realm,
+            ctx.accounts.master.key(),
+            vec![RealmMasterRole::Owner]
+        ),
+        ErrorCode::UnauthorizedRealmMaster
+    );
+
     emit!(RealmEvent {
-        realm_pubkey: ctx.accounts.realm.key(),
+        realm_pubkey: realm.key(),
         event_type: RealmEventType::RealmDeleted {},
     });
 
     Ok(())
+}
+
+#[derive(Accounts)]
+#[instruction(id: String)]
+pub struct AddRealmMaster<'info> {
+    #[account(
+        mut,
+        seeds = [REALM_SEED, id.as_bytes()],
+        bump,
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(mut)]
+    pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+pub fn add_realm_master(
+    ctx: Context<AddRealmMaster>,
+    _id: String,
+    new_master_pubkey: Pubkey,
+) -> Result<()> {
+    let realm = &mut ctx.accounts.realm;
+
+    require!(
+        has_role(
+            realm,
+            ctx.accounts.master.key(),
+            vec![RealmMasterRole::Owner]
+        ),
+        ErrorCode::UnauthorizedRealmMaster
+    );
+
+    realm.masters.push(RealmMaster {
+        pubkey: new_master_pubkey,
+        role: RealmMasterRole::Admin,
+    });
+
+    Ok(())
+}
+
+fn has_role(realm: &Realm, pubkey: Pubkey, roles: Vec<RealmMasterRole>) -> bool {
+    realm
+        .masters
+        .iter()
+        .any(|master| master.pubkey == pubkey && roles.contains(&master.role))
 }

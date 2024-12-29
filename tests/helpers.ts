@@ -14,9 +14,9 @@ export async function confirmTransaction(tx: string) {
   });
 }
 
-export function getRealmPDA(realmMaster: anchor.web3.PublicKey, realmSeed: string, program: anchor.Program<any>) {
+export function getRealmPDA(realmSeed: string, program: anchor.Program<any>) {
   const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("realm"), realmMaster.toBuffer(), Buffer.from(realmSeed)],
+    [Buffer.from("realm"), Buffer.from(realmSeed)],
     program.programId
   );
   return pda;
