@@ -11,6 +11,9 @@ pub enum ErrorCode {
     #[msg("Realm master not found")]
     RealmMasterNotFound,
 
+    #[msg("Duplicate realm master")]
+    DuplicateRealmMaster,
+
     #[msg("Name is too long")]
     NameTooLong,
 

@@ -140,7 +140,6 @@ describe("Manage several realms", () => {
     expect(realmAccount.masters[1].pubkey.toBase58()).to.equal(bob.publicKey.toBase58());
     expect(realmAccount.masters[1].role).to.deep.equal({ admin: {} });
 
-
     // Alice transfers ownership to Bob
     tx = await program.methods
       .transferRealmOwnership(realmId, bob.publicKey)
