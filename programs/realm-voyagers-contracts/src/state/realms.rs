@@ -15,16 +15,22 @@ pub struct RealmMaster {
 }
 
 #[account]
-#[derive(InitSpace)]
 pub struct Realm {
-    #[max_len(MAX_NAME_LEN)]
     pub name: String,
-
-    #[max_len(MAX_DESCRIPTION_LEN)]
     pub description: String,
-
     pub created_at: i64,
 
-    #[max_len(MAX_REALM_MASTERS)]
     pub masters: Vec<RealmMaster>,
+}
+
+#[macro_export]
+macro_rules! realm_space {
+    ($name:expr, $description:expr, $masters_count:expr) => {
+        // From https://book.anchor-lang.com/anchor_references/space.html
+        8 + // discriminator
+        4 + $name.len() + // String prefix + content
+        4 + $description.len() + // String prefix + content
+        8 + // i64 timestamp
+        4 + $masters_count * std::mem::size_of::<RealmMaster>() // Vec prefix + content
+    };
 }

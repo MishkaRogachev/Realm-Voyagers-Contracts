@@ -15,6 +15,7 @@ describe("Manage several realms", () => {
 
   it("Alice creates a realm and transfers ownership to bob", async () => {
     await airdrop(alice.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+    await airdrop(bob.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
 
     // Realm data
     const realmId = "realm_id_123";
@@ -66,7 +67,7 @@ describe("Manage several realms", () => {
       await confirmTransaction(tx);
       expect.fail("Bob should not be authorized to update the realm");
     } catch (err) {
-      expect(err.message).to.include("UnauthorizedRealmMaster");
+      expect(err.error.errorCode.code).to.equal("UnauthorizedRealmMaster");
     }
 
     // Fetch & check realm account after failed update
@@ -87,7 +88,7 @@ describe("Manage several realms", () => {
       await confirmTransaction(tx);
       expect.fail("Bob should not be authorized to add himself as realm master");
     } catch (err) {
-      expect(err.message).to.include("UnauthorizedRealmMaster");
+      expect(err.error.errorCode.code).to.equal("UnauthorizedRealmMaster");
     }
 
     // Alice adds Bob as a realm master
@@ -129,7 +130,7 @@ describe("Manage several realms", () => {
       await confirmTransaction(tx);
       expect.fail("Bob should not be authorized to transfer realm ownership");
     } catch (err) {
-      expect(err.message).to.include("UnauthorizedRealmMaster");
+      expect(err.error.errorCode.code).to.equal("UnauthorizedRealmMaster");
     }
 
     // Fetch & check realm account after failed ownership transfer
@@ -180,7 +181,7 @@ describe("Manage several realms", () => {
       await confirmTransaction(tx);
       expect.fail("Alice should not be authorized to update the realm");
     } catch (err) {
-      expect(err.message).to.include("UnauthorizedRealmMaster");
+      expect(err.error.errorCode.code).to.equal("UnauthorizedRealmMaster");
     }
 
     // Bob deletes the realm

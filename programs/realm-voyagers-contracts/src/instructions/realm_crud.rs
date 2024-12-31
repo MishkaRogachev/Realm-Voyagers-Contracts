@@ -6,12 +6,12 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(id: String)]
+#[instruction(id: String, name: String, description: String)]
 pub struct CreateRealm<'info> {
     #[account(
         init,
         payer = master,
-        space = 8 + Realm::INIT_SPACE,
+        space = crate::realm_space!(name, description, 1),
         seeds = [REALM_SEED, id.as_bytes()],
         bump
     )]
@@ -29,6 +29,12 @@ pub fn create_realm(
     name: String,
     description: String,
 ) -> Result<()> {
+    require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
+    require!(
+        description.len() <= MAX_DESCRIPTION_LEN,
+        ErrorCode::DescriptionTooLong
+    );
+
     let realm = &mut ctx.accounts.realm;
     realm.name = name.clone();
     realm.description = description.clone();
@@ -47,18 +53,22 @@ pub fn create_realm(
 }
 
 #[derive(Accounts)]
-#[instruction(id: String)]
+#[instruction(id: String, name: String, description: String)]
 pub struct UpdateRealm<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, id.as_bytes()],
         bump,
-        realloc = 8 + Realm::INIT_SPACE,
+        realloc = crate::realm_space!(
+            name,
+            description,
+            realm.masters.len()
+        ),
         realloc::payer = master,
-        realloc::zero = true,
-        constraint = realm.masters.iter().any(|candidate|
-            candidate.pubkey == master.key() &&
-            (candidate.role == RealmMasterRole::Owner || candidate.role == RealmMasterRole::Admin)
+        realloc::zero = false,
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master.key() &&
+            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub realm: Account<'info, Realm>,

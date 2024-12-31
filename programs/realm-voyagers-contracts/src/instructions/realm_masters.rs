@@ -6,16 +6,26 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(id: String)]
+#[instruction(id: String, new_master_pubkey: Pubkey)]
 pub struct AddRealmMaster<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, id.as_bytes()],
         bump,
-        constraint = realm.masters.iter().any(|candidate|
-            candidate.pubkey == master.key() &&
-            candidate.role == RealmMasterRole::Owner
-        ) @ ErrorCode::UnauthorizedRealmMaster
+        realloc = crate::realm_space!(
+            realm.name,
+            realm.description,
+            realm.masters.len() + 1 // Increment
+        ),
+        realloc::payer = master,
+        realloc::zero = false,
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master.key() &&
+            m.role == RealmMasterRole::Owner
+        ) @ ErrorCode::UnauthorizedRealmMaster,
+        constraint = !realm.masters.iter().any(|m|
+            m.pubkey == new_master_pubkey
+        ) @ ErrorCode::DuplicateRealmMaster
     )]
     pub realm: Account<'info, Realm>,
 
@@ -31,14 +41,6 @@ pub fn add_realm_master(
     new_master_pubkey: Pubkey,
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
-
-    require!(
-        !realm
-            .masters
-            .iter()
-            .any(|master| master.pubkey == new_master_pubkey),
-        ErrorCode::DuplicateRealmMaster
-    );
 
     let master = RealmMaster {
         pubkey: new_master_pubkey,
@@ -56,16 +58,30 @@ pub fn add_realm_master(
 }
 
 #[derive(Accounts)]
-#[instruction(id: String)]
+#[instruction(id: String, master_pubkey: Pubkey)]
 pub struct RemoveRealmMaster<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, id.as_bytes()],
         bump,
-        constraint = realm.masters.iter().any(|candidate|
-            candidate.pubkey == master.key() &&
-            candidate.role == RealmMasterRole::Owner
-        ) @ ErrorCode::UnauthorizedRealmMaster
+        realloc = crate::realm_space!(
+            realm.name,
+            realm.description,
+            realm.masters.len() - 1 // Decrement
+        ),
+        realloc::payer = master,
+        realloc::zero = false,
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master.key() &&
+            m.role == RealmMasterRole::Owner
+        ) @ ErrorCode::UnauthorizedRealmMaster,
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master_pubkey
+        ) @ ErrorCode::RealmMasterNotFound,
+        constraint = !realm.masters.contains(&RealmMaster {
+            pubkey: master_pubkey,
+            role: RealmMasterRole::Owner
+        }) @ ErrorCode::CantRemoveRealmOwner
     )]
     pub realm: Account<'info, Realm>,
 
@@ -87,11 +103,6 @@ pub fn remove_realm_master(
         .iter()
         .position(|master| master.pubkey == master_pubkey)
         .ok_or(ErrorCode::RealmMasterNotFound)?;
-
-    require!(
-        realm.masters[master_index].role != RealmMasterRole::Owner,
-        ErrorCode::CantRemoveRealmOwner
-    );
 
     let master = realm.masters.swap_remove(master_index);
     emit!(RealmEvent {
