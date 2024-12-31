@@ -14,49 +14,51 @@ use instructions::*;
 pub mod realm_voyagers {
     use super::*;
 
+    // Realm CRUD
     pub fn create_realm(
         ctx: Context<CreateRealm>,
-        id: String,
+        realm_id: String,
         name: String,
         description: String,
     ) -> Result<()> {
-        realm_crud::create_realm(ctx, id, name, description)
+        realm_crud::create_realm(ctx, realm_id, name, description)
     }
 
     pub fn update_realm(
         ctx: Context<UpdateRealm>,
-        id: String,
+        realm_id: String,
         name: String,
         description: String,
     ) -> Result<()> {
-        realm_crud::update_realm(ctx, id, name, description)
+        realm_crud::update_realm(ctx, realm_id, name, description)
     }
 
-    pub fn delete_realm(ctx: Context<DeleteRealm>, id: String) -> Result<()> {
-        realm_crud::delete_realm(ctx, id)
+    pub fn delete_realm(ctx: Context<DeleteRealm>, realm_id: String) -> Result<()> {
+        realm_crud::delete_realm(ctx, realm_id)
     }
 
+    // Realm Masters
     pub fn add_realm_master(
         ctx: Context<AddRealmMaster>,
-        id: String,
+        realm_id: String,
         new_master_pubkey: Pubkey,
     ) -> Result<()> {
-        realm_masters::add_realm_master(ctx, id, new_master_pubkey)
+        realm_masters::add_realm_master(ctx, realm_id, new_master_pubkey)
     }
 
     pub fn remove_realm_master(
         ctx: Context<RemoveRealmMaster>,
-        id: String,
+        realm_id: String,
         master_pubkey: Pubkey,
     ) -> Result<()> {
-        realm_masters::remove_realm_master(ctx, id, master_pubkey)
+        realm_masters::remove_realm_master(ctx, realm_id, master_pubkey)
     }
 
     pub fn transfer_realm_ownership(
         ctx: Context<TransferRealmOwnership>,
-        id: String,
+        realm_id: String,
         new_owner_pubkey: Pubkey,
     ) -> Result<()> {
-        realm_masters::transfer_realm_ownership(ctx, id, new_owner_pubkey)
+        realm_masters::transfer_realm_ownership(ctx, realm_id, new_owner_pubkey)
     }
 }

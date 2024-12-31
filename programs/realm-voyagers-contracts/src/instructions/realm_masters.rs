@@ -6,11 +6,11 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(id: String, new_master_pubkey: Pubkey)]
+#[instruction(realm_id: String, new_master_pubkey: Pubkey)]
 pub struct AddRealmMaster<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, id.as_bytes()],
+        seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
             realm.name,
@@ -37,7 +37,7 @@ pub struct AddRealmMaster<'info> {
 
 pub fn add_realm_master(
     ctx: Context<AddRealmMaster>,
-    _id: String,
+    _realm_id: String,
     new_master_pubkey: Pubkey,
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
@@ -58,11 +58,11 @@ pub fn add_realm_master(
 }
 
 #[derive(Accounts)]
-#[instruction(id: String, master_pubkey: Pubkey)]
+#[instruction(realm_id: String, master_pubkey: Pubkey)]
 pub struct RemoveRealmMaster<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, id.as_bytes()],
+        seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
             realm.name,
@@ -93,7 +93,7 @@ pub struct RemoveRealmMaster<'info> {
 
 pub fn remove_realm_master(
     ctx: Context<RemoveRealmMaster>,
-    _id: String,
+    _realm_id: String,
     master_pubkey: Pubkey,
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
@@ -114,11 +114,11 @@ pub fn remove_realm_master(
 }
 
 #[derive(Accounts)]
-#[instruction(id: String)]
+#[instruction(realm_id: String)]
 pub struct TransferRealmOwnership<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, id.as_bytes()],
+        seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         constraint = realm.masters.iter().any(|candidate|
             candidate.pubkey == master.key() &&
@@ -135,7 +135,7 @@ pub struct TransferRealmOwnership<'info> {
 
 pub fn transfer_realm_ownership(
     ctx: Context<TransferRealmOwnership>,
-    _id: String,
+    _realm_id: String,
     new_owner_pubkey: Pubkey,
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;

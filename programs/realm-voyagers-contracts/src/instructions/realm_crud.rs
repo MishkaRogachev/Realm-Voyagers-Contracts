@@ -6,13 +6,13 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(id: String, name: String, description: String)]
+#[instruction(realm_id: String, name: String, description: String)]
 pub struct CreateRealm<'info> {
     #[account(
         init,
         payer = master,
         space = crate::realm_space!(name, description, 1),
-        seeds = [REALM_SEED, id.as_bytes()],
+        seeds = [REALM_SEED, realm_id.as_bytes()],
         bump
     )]
     pub realm: Account<'info, Realm>,
@@ -25,7 +25,7 @@ pub struct CreateRealm<'info> {
 
 pub fn create_realm(
     ctx: Context<CreateRealm>,
-    _id: String,
+    _realm_id: String,
     name: String,
     description: String,
 ) -> Result<()> {
@@ -53,11 +53,11 @@ pub fn create_realm(
 }
 
 #[derive(Accounts)]
-#[instruction(id: String, name: String, description: String)]
+#[instruction(realm_id: String, name: String, description: String)]
 pub struct UpdateRealm<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, id.as_bytes()],
+        seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
             name,
@@ -81,7 +81,7 @@ pub struct UpdateRealm<'info> {
 
 pub fn update_realm(
     ctx: Context<UpdateRealm>,
-    _id: String,
+    _realm_id: String,
     name: String,
     description: String,
 ) -> Result<()> {
@@ -104,11 +104,11 @@ pub fn update_realm(
 }
 
 #[derive(Accounts)]
-#[instruction(id: String)]
+#[instruction(realm_id: String)]
 pub struct DeleteRealm<'info> {
     #[account(
         mut,
-        seeds = [REALM_SEED, id.as_bytes()],
+        seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         close = master,
         constraint = realm.masters.iter().any(|candidate|
@@ -124,7 +124,7 @@ pub struct DeleteRealm<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn delete_realm(ctx: Context<DeleteRealm>, _id: String) -> Result<()> {
+pub fn delete_realm(ctx: Context<DeleteRealm>, _realm_id: String) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
 
     emit!(RealmEvent {
