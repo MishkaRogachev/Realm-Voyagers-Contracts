@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-realm_voyagers_contracts = "CaSHnhSk8WAV46aSkdAwZ1fqiqskTUQZDFatNFWJtxHT"
+realm_voyagers = "CaSHnhSk8WAV46aSkdAwZ1fqiqskTUQZDFatNFWJtxHT"
 
 [registry]
 url = "https://api.apr.dev"
