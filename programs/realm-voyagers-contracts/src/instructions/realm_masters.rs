@@ -18,7 +18,12 @@ pub struct AddRealmMaster<'info> {
             realm.masters.len() + 1 // Increment
         ),
         realloc::payer = master,
-        realloc::zero = false,
+        realloc::zero = false
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(
+        mut,
         constraint = realm.masters.iter().any(|m|
             m.pubkey == master.key() &&
             m.role == RealmMasterRole::Owner
@@ -27,9 +32,6 @@ pub struct AddRealmMaster<'info> {
             m.pubkey == new_master_pubkey
         ) @ ErrorCode::DuplicateRealmMaster
     )]
-    pub realm: Account<'info, Realm>,
-
-    #[account(mut)]
     pub master: Signer<'info>,
 
     pub system_program: Program<'info, System>,
@@ -71,6 +73,11 @@ pub struct RemoveRealmMaster<'info> {
         ),
         realloc::payer = master,
         realloc::zero = false,
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(
+        mut,
         constraint = realm.masters.iter().any(|m|
             m.pubkey == master.key() &&
             m.role == RealmMasterRole::Owner
@@ -83,9 +90,6 @@ pub struct RemoveRealmMaster<'info> {
             role: RealmMasterRole::Owner
         }) @ ErrorCode::CantRemoveRealmOwner
     )]
-    pub realm: Account<'info, Realm>,
-
-    #[account(mut)]
     pub master: Signer<'info>,
 
     pub system_program: Program<'info, System>,
@@ -120,14 +124,16 @@ pub struct TransferRealmOwnership<'info> {
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(
+        mut,
         constraint = realm.masters.iter().any(|candidate|
             candidate.pubkey == master.key() &&
             candidate.role == RealmMasterRole::Owner
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
-    pub realm: Account<'info, Realm>,
-
-    #[account(mut)]
     pub master: Signer<'info>,
 
     pub system_program: Program<'info, System>,

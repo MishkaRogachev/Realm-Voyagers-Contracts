@@ -9,7 +9,6 @@ describe("Manage several realms", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.RealmVoyagers as Program<RealmVoyagers>;
-
   const realmMaster = anchor.web3.Keypair.generate();
 
   it("Create realm, add some locations and delete", async () => {
@@ -27,7 +26,7 @@ describe("Manage several realms", () => {
     const firstRealmPDA = getRealmPDA(firstRealmId, program);
     const secondRealmPDA = getRealmPDA(secondRealmId, program);
 
-    // Add log listeners for events
+    // Add listener for events
     let events = [];
     let listener = program.addEventListener("realmEvent", (event) => {
       events.push(event);

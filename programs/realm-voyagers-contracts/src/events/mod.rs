@@ -1,3 +1,5 @@
-pub mod realms;
+pub mod location;
+pub mod realm;
 
-pub use realms::*;
+pub use location::*;
+pub use realm::*;

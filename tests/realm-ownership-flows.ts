@@ -4,12 +4,11 @@ import { RealmVoyagers } from "../target/types/realm_voyagers";
 import { expect } from "chai";
 import { airdrop, confirmTransaction, getRealmPDA } from "./helpers";
 
-describe("Manage several realms", () => {
+describe("Realm ownership flows", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
   const program = anchor.workspace.RealmVoyagers as Program<RealmVoyagers>;
-
   const alice = anchor.web3.Keypair.generate();
   const bob = anchor.web3.Keypair.generate();
 

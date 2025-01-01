@@ -14,9 +14,17 @@ export async function confirmTransaction(tx: string) {
   });
 }
 
-export function getRealmPDA(realmSeed: string, program: anchor.Program<any>) {
+export function getRealmPDA(realmId: string, program: anchor.Program<any>): anchor.web3.PublicKey{
   const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("realm"), Buffer.from(realmSeed)],
+    [Buffer.from("realm"), Buffer.from(realmId)],
+    program.programId
+  );
+  return pda;
+}
+
+export function getLocationPDA(realmId: string, locationId: string, program: anchor.Program<any>) {
+  const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("location"), Buffer.from(realmId), Buffer.from(locationId)],
     program.programId
   );
   return pda;

@@ -14,14 +14,14 @@ use instructions::*;
 pub mod realm_voyagers {
     use super::*;
 
-    // Realm CRUD
+    // Realms
     pub fn create_realm(
         ctx: Context<CreateRealm>,
         realm_id: String,
         name: String,
         description: String,
     ) -> Result<()> {
-        realm_crud::create_realm(ctx, realm_id, name, description)
+        realms::create_realm(ctx, realm_id, name, description)
     }
 
     pub fn update_realm(
@@ -30,11 +30,11 @@ pub mod realm_voyagers {
         name: String,
         description: String,
     ) -> Result<()> {
-        realm_crud::update_realm(ctx, realm_id, name, description)
+        realms::update_realm(ctx, realm_id, name, description)
     }
 
     pub fn delete_realm(ctx: Context<DeleteRealm>, realm_id: String) -> Result<()> {
-        realm_crud::delete_realm(ctx, realm_id)
+        realms::delete_realm(ctx, realm_id)
     }
 
     // Realm Masters
@@ -60,5 +60,36 @@ pub mod realm_voyagers {
         new_owner_pubkey: Pubkey,
     ) -> Result<()> {
         realm_masters::transfer_realm_ownership(ctx, realm_id, new_owner_pubkey)
+    }
+
+    // Realm Locations
+    pub fn add_realm_location(
+        ctx: Context<AddRealmLocation>,
+        realm_id: String,
+        location_id: String,
+        name: String,
+        tileset: String,
+        tilemap: String,
+    ) -> Result<()> {
+        realm_locations::add_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
+    }
+
+    pub fn update_realm_location(
+        ctx: Context<UpdateRealmLocation>,
+        realm_id: String,
+        location_id: String,
+        name: String,
+        tileset: String,
+        tilemap: String,
+    ) -> Result<()> {
+        realm_locations::update_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
+    }
+
+    pub fn delete_realm_location(
+        ctx: Context<DeleteRealmLocation>,
+        realm_id: String,
+        location_id: String,
+    ) -> Result<()> {
+        realm_locations::delete_realm_location(ctx, realm_id, location_id)
     }
 }

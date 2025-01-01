@@ -65,15 +65,17 @@ pub struct UpdateRealm<'info> {
             realm.masters.len()
         ),
         realloc::payer = master,
-        realloc::zero = false,
+        realloc::zero = false
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(
+        mut,
         constraint = realm.masters.iter().any(|m|
             m.pubkey == master.key() &&
             (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
-    pub realm: Account<'info, Realm>,
-
-    #[account(mut)]
     pub master: Signer<'info>,
 
     pub system_program: Program<'info, System>,
@@ -110,15 +112,17 @@ pub struct DeleteRealm<'info> {
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
-        close = master,
+        close = master
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(
+        mut,
         constraint = realm.masters.iter().any(|candidate|
             candidate.pubkey == master.key() &&
             candidate.role == RealmMasterRole::Owner
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
-    pub realm: Account<'info, Realm>,
-
-    #[account(mut)]
     pub master: Signer<'info>,
 
     pub system_program: Program<'info, System>,
