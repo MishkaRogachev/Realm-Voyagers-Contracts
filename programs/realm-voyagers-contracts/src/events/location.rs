@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum LocationEventType {
-    LocationCreated {
+    LocationAdded {
         name: String,
         tilemap: String,
         tileset: String,
@@ -12,7 +12,7 @@ pub enum LocationEventType {
         tilemap: String,
         tileset: String,
     },
-    LocationDeleted {},
+    LocationRemoved {},
 }
 
 #[event]

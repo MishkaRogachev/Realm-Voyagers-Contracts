@@ -15,7 +15,8 @@ pub struct AddRealmMaster<'info> {
         realloc = crate::realm_space!(
             realm.name,
             realm.description,
-            realm.masters.len() + 1 // Increment
+            realm.masters.len() + 1, // Increment
+            realm.locations.len()
         ),
         realloc::payer = master,
         realloc::zero = false
@@ -69,7 +70,8 @@ pub struct RemoveRealmMaster<'info> {
         realloc = crate::realm_space!(
             realm.name,
             realm.description,
-            realm.masters.len() - 1 // Decrement
+            realm.masters.len() - 1, // Decrement
+            realm.locations.len()
         ),
         realloc::payer = master,
         realloc::zero = false,

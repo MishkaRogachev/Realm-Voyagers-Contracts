@@ -11,7 +11,7 @@ pub struct CreateRealm<'info> {
     #[account(
         init,
         payer = master,
-        space = crate::realm_space!(name, description, 1),
+        space = crate::realm_space!(name, description, 1, 0),
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump
     )]
@@ -62,7 +62,8 @@ pub struct UpdateRealm<'info> {
         realloc = crate::realm_space!(
             name,
             description,
-            realm.masters.len()
+            realm.masters.len(),
+            realm.locations.len()
         ),
         realloc::payer = master,
         realloc::zero = false
@@ -130,6 +131,19 @@ pub struct DeleteRealm<'info> {
 
 pub fn delete_realm(ctx: Context<DeleteRealm>, _realm_id: String) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
+
+    // Iterate over and close all locations linked to the realm
+    for location_pubkey in realm.locations.iter() {
+        let location_info = ctx
+            .remaining_accounts
+            .iter()
+            .find(|account_info| account_info.key == location_pubkey)
+            .ok_or(ErrorCode::LocationNotProvided)?;
+
+        **ctx.accounts.master.lamports.borrow_mut() += location_info.lamports();
+        **location_info.lamports.borrow_mut() = 0;
+        location_info.try_borrow_mut_data()?.fill(0);
+    }
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),

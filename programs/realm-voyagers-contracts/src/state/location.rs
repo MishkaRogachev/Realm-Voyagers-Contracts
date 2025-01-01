@@ -11,10 +11,10 @@ pub struct RealmLocation {
 #[macro_export]
 macro_rules! realm_location_space {
     ($name:expr, $tileset:expr, $tilemap:expr) => {
-        8 + // discriminator
-        32 + // realm pubkey
-        4 + $name.len() + // String prefix + content
-        4 + $tileset.len() + // String prefix + content
-        4 + $tilemap.len() // String prefix + content
+        8 +                     // discriminator
+        32 +                    // realm pubkey
+        4 + $name.len() +       // String prefix + content
+        4 + $tileset.len() +    // String prefix + content
+        4 + $tilemap.len()      // String prefix + content
     };
 }

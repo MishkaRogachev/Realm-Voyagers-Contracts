@@ -85,11 +85,11 @@ pub mod realm_voyagers {
         realm_locations::update_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
     }
 
-    pub fn delete_realm_location(
-        ctx: Context<DeleteRealmLocation>,
+    pub fn remove_realm_location(
+        ctx: Context<RemoveRealmLocation>,
         realm_id: String,
         location_id: String,
     ) -> Result<()> {
-        realm_locations::delete_realm_location(ctx, realm_id, location_id)
+        realm_locations::remove_realm_location(ctx, realm_id, location_id)
     }
 }

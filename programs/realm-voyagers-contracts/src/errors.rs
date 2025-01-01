@@ -22,4 +22,7 @@ pub enum ErrorCode {
 
     #[msg("Resource path is too long")]
     ResourcePathTooLong,
+
+    #[msg("Location not provided")]
+    LocationNotProvided,
 }

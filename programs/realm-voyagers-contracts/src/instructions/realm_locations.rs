@@ -12,6 +12,14 @@ pub struct AddRealmLocation<'info> {
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
+        realloc = crate::realm_space!(
+            realm.name,
+            realm.description,
+            realm.masters.len(),
+            realm.locations.len() + 1 // Increment
+        ),
+        realloc::payer = master,
+        realloc::zero = false
     )]
     pub realm: Account<'info, Realm>,
 
@@ -60,10 +68,12 @@ pub fn add_realm_location(
     location.tileset = tileset.clone();
     location.tilemap = tilemap.clone();
 
+    ctx.accounts.realm.locations.push(location.key());
+
     emit!(LocationEvent {
         realm_pubkey: ctx.accounts.realm.key(),
         location_pubkey: location.key(),
-        event_type: LocationEventType::LocationCreated {
+        event_type: LocationEventType::LocationAdded {
             name,
             tilemap,
             tileset
@@ -143,11 +153,19 @@ pub fn update_realm_location(
 
 #[derive(Accounts)]
 #[instruction(realm_id: String, location_id: String)]
-pub struct DeleteRealmLocation<'info> {
+pub struct RemoveRealmLocation<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
+        realloc = crate::realm_space!(
+            realm.name,
+            realm.description,
+            realm.masters.len(),
+            realm.locations.len() - 1 // Decrement
+        ),
+        realloc::payer = master,
+        realloc::zero = false
     )]
     pub realm: Account<'info, Realm>,
 
@@ -171,15 +189,20 @@ pub struct DeleteRealmLocation<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn delete_realm_location(
-    ctx: Context<DeleteRealmLocation>,
+pub fn remove_realm_location(
+    ctx: Context<RemoveRealmLocation>,
     _realm_id: String,
     _location_id: String,
 ) -> Result<()> {
+    ctx.accounts
+        .realm
+        .locations
+        .retain(|l| l != &ctx.accounts.location.key());
+
     emit!(LocationEvent {
         realm_pubkey: ctx.accounts.realm.key(),
         location_pubkey: ctx.accounts.location.key(),
-        event_type: LocationEventType::LocationDeleted {},
+        event_type: LocationEventType::LocationRemoved {},
     });
 
     Ok(())
