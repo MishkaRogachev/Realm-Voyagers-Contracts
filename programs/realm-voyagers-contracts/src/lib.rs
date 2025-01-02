@@ -43,7 +43,7 @@ pub mod realm_voyagers {
         realm_id: String,
         new_master_pubkey: Pubkey,
     ) -> Result<()> {
-        realm_masters::add_realm_master(ctx, realm_id, new_master_pubkey)
+        masters::add_realm_master(ctx, realm_id, new_master_pubkey)
     }
 
     pub fn remove_realm_master(
@@ -51,7 +51,7 @@ pub mod realm_voyagers {
         realm_id: String,
         master_pubkey: Pubkey,
     ) -> Result<()> {
-        realm_masters::remove_realm_master(ctx, realm_id, master_pubkey)
+        masters::remove_realm_master(ctx, realm_id, master_pubkey)
     }
 
     pub fn transfer_realm_ownership(
@@ -59,7 +59,7 @@ pub mod realm_voyagers {
         realm_id: String,
         new_owner_pubkey: Pubkey,
     ) -> Result<()> {
-        realm_masters::transfer_realm_ownership(ctx, realm_id, new_owner_pubkey)
+        masters::transfer_realm_ownership(ctx, realm_id, new_owner_pubkey)
     }
 
     // Realm Locations
@@ -71,7 +71,7 @@ pub mod realm_voyagers {
         tileset: String,
         tilemap: String,
     ) -> Result<()> {
-        realm_locations::add_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
+        locations::add_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
     }
 
     pub fn update_realm_location(
@@ -82,7 +82,7 @@ pub mod realm_voyagers {
         tileset: String,
         tilemap: String,
     ) -> Result<()> {
-        realm_locations::update_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
+        locations::update_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
     }
 
     pub fn remove_realm_location(
@@ -90,7 +90,7 @@ pub mod realm_voyagers {
         realm_id: String,
         location_id: String,
     ) -> Result<()> {
-        realm_locations::remove_realm_location(ctx, realm_id, location_id)
+        locations::remove_realm_location(ctx, realm_id, location_id)
     }
 
     pub fn set_realm_starting_point(
@@ -99,7 +99,7 @@ pub mod realm_voyagers {
         location_id: String,
         position: state::Position,
     ) -> Result<()> {
-        realm_locations::set_realm_starting_point(ctx, realm_id, location_id, position)
+        locations::set_realm_starting_point(ctx, realm_id, location_id, position)
     }
 
     // Journey

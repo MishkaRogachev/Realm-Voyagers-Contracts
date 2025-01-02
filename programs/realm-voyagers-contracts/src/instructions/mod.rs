@@ -1,11 +1,11 @@
 #![allow(ambiguous_glob_reexports)]
 
 pub mod journeys;
-pub mod realm_locations;
-pub mod realm_masters;
+pub mod locations;
+pub mod masters;
 pub mod realms;
 
 pub use journeys::*;
-pub use realm_locations::*;
-pub use realm_masters::*;
+pub use locations::*;
+pub use masters::*;
 pub use realms::*;

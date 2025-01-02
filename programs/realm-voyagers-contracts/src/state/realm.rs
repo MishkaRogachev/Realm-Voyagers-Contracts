@@ -1,25 +1,12 @@
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]
-pub enum RealmMasterRole {
-    Owner = 0,
-    Admin = 1,
-    Curator = 2,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
-pub struct RealmMaster {
-    pub pubkey: Pubkey,
-    pub role: RealmMasterRole,
-}
-
 #[account]
 pub struct Realm {
     pub name: String,
     pub description: String,
     pub created_at: i64,
 
-    pub masters: Vec<RealmMaster>,
+    pub masters: Vec<crate::state::RealmMaster>,
     pub locations: Vec<Pubkey>,
 
     pub starting_location: Option<Pubkey>,
@@ -34,7 +21,7 @@ macro_rules! realm_space {
         4 + $name.len() +                                           // String prefix + content
         4 + $description.len() +                                    // String prefix + content
         8 +                                                         // i64 timestamp
-        4 + $masters_count * std::mem::size_of::<RealmMaster>() +   // Vec prefix + content
+        4 + $masters_count * std::mem::size_of::<crate::state::RealmMaster>() +   // Vec prefix + content
         4 + $locations_count * std::mem::size_of::<Pubkey>() +      // Vec prefix + content
         1 + std::mem::size_of::<Pubkey>() +                         // Option + Pubkey
         std::mem::size_of::<crate::state::Position>()               // Position
