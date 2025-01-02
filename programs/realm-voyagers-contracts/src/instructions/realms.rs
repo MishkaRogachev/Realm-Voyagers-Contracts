@@ -73,8 +73,7 @@ pub struct UpdateRealm<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
+            m.pubkey == master.key() && m.can_update_realm()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -119,9 +118,8 @@ pub struct DeleteRealm<'info> {
 
     #[account(
         mut,
-        constraint = realm.masters.iter().any(|candidate|
-            candidate.pubkey == master.key() &&
-            candidate.role == RealmMasterRole::Owner
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master.key() && m.can_delete_realm()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -139,6 +137,8 @@ pub fn delete_realm(ctx: Context<DeleteRealm>, _realm_id: String) -> Result<()> 
             .iter()
             .find(|account_info| account_info.key == location_pubkey)
             .ok_or(ErrorCode::LocationNotProvided)?;
+
+        // TODO: transfer to location owner
 
         **ctx.accounts.master.lamports.borrow_mut() += location_info.lamports();
         **location_info.lamports.borrow_mut() = 0;

@@ -35,8 +35,7 @@ pub struct AddRealmLocation<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
+            m.pubkey == master.key() && m.can_add_realm_location()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -66,6 +65,8 @@ pub fn add_realm_location(
     let location = &mut ctx.accounts.location;
 
     location.realm = realm.key();
+    location.owner = *ctx.accounts.master.key;
+
     location.name = name.clone();
     location.tileset = tileset.clone();
     location.tilemap = tilemap.clone();
@@ -111,8 +112,7 @@ pub struct UpdateRealmLocation<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
+            m.pubkey == master.key() && m.can_manage_realm_location(&location)
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -185,8 +185,7 @@ pub struct RemoveRealmLocation<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
+            m.pubkey == master.key() && m.can_manage_realm_location(&location)
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -199,10 +198,16 @@ pub fn remove_realm_location(
     _realm_id: String,
     _location_id: String,
 ) -> Result<()> {
-    ctx.accounts
-        .realm
+    let realm = &mut ctx.accounts.realm;
+
+    realm
         .locations
         .retain(|l| l != &ctx.accounts.location.key());
+
+    if realm.starting_location == Some(ctx.accounts.location.key()) {
+        realm.starting_location = None;
+        realm.starting_position = Position::default();
+    }
 
     emit!(LocationEvent {
         realm_pubkey: ctx.accounts.realm.key(),
@@ -233,8 +238,7 @@ pub struct SetRealmStartingLocation<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
+            m.pubkey == master.key() && m.can_set_realm_starting_location()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,

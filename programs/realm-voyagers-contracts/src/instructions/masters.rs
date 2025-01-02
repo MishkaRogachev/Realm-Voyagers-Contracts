@@ -26,8 +26,7 @@ pub struct AddRealmMaster<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            m.role == RealmMasterRole::Owner
+            m.pubkey == master.key() && m.can_manage_realm_masters()
         ) @ ErrorCode::UnauthorizedRealmMaster,
         constraint = !realm.masters.iter().any(|m|
             m.pubkey == new_master_pubkey
@@ -81,8 +80,7 @@ pub struct RemoveRealmMaster<'info> {
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() &&
-            m.role == RealmMasterRole::Owner
+            m.pubkey == master.key() && m.can_manage_realm_masters()
         ) @ ErrorCode::UnauthorizedRealmMaster,
         constraint = realm.masters.iter().any(|m|
             m.pubkey == master_pubkey
@@ -131,9 +129,8 @@ pub struct TransferRealmOwnership<'info> {
 
     #[account(
         mut,
-        constraint = realm.masters.iter().any(|candidate|
-            candidate.pubkey == master.key() &&
-            candidate.role == RealmMasterRole::Owner
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master.key() && m.can_manage_realm_masters()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
