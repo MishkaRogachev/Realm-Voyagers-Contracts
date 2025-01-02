@@ -62,16 +62,21 @@ pub fn add_realm_location(
         ErrorCode::ResourcePathTooLong
     );
 
+    let realm = &mut ctx.accounts.realm;
     let location = &mut ctx.accounts.location;
-    location.realm = ctx.accounts.realm.key();
+
+    location.realm = realm.key();
     location.name = name.clone();
     location.tileset = tileset.clone();
     location.tilemap = tilemap.clone();
 
-    ctx.accounts.realm.locations.push(location.key());
+    realm.locations.push(location.key());
+    if realm.starting_location.is_none() {
+        realm.starting_location = Some(location.key());
+    }
 
     emit!(LocationEvent {
-        realm_pubkey: ctx.accounts.realm.key(),
+        realm_pubkey: realm.key(),
         location_pubkey: location.key(),
         event_type: LocationEventType::LocationAdded {
             name,
@@ -204,6 +209,47 @@ pub fn remove_realm_location(
         location_pubkey: ctx.accounts.location.key(),
         event_type: LocationEventType::LocationRemoved {},
     });
+
+    Ok(())
+}
+
+#[derive(Accounts)]
+#[instruction(realm_id: String, location_id: String)]
+pub struct SetRealmStartingLocation<'info> {
+    #[account(
+        mut,
+        seeds = [REALM_SEED, realm_id.as_bytes()],
+        bump,
+    )]
+    pub realm: Account<'info, Realm>,
+
+    #[account(
+        mut,
+        seeds = [LOCATION_SEED, realm_id.as_bytes(), location_id.as_bytes()],
+        bump,
+    )]
+    pub location: Account<'info, RealmLocation>,
+
+    #[account(
+        mut,
+        constraint = realm.masters.iter().any(|m|
+            m.pubkey == master.key() &&
+            (m.role == RealmMasterRole::Owner || m.role == RealmMasterRole::Admin)
+        ) @ ErrorCode::UnauthorizedRealmMaster
+    )]
+    pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+pub fn set_realm_starting_point(
+    ctx: Context<SetRealmStartingLocation>,
+    _realm_id: String,
+    _location_id: String,
+    position: Position,
+) -> Result<()> {
+    ctx.accounts.realm.starting_location = Some(ctx.accounts.location.key());
+    ctx.accounts.realm.starting_position = position;
 
     Ok(())
 }

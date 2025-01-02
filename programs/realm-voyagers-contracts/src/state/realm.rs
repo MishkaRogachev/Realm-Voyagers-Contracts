@@ -21,6 +21,9 @@ pub struct Realm {
 
     pub masters: Vec<RealmMaster>,
     pub locations: Vec<Pubkey>,
+
+    pub starting_location: Option<Pubkey>,
+    pub starting_position: crate::state::Position,
 }
 
 #[macro_export]
@@ -32,6 +35,8 @@ macro_rules! realm_space {
         4 + $description.len() +                                    // String prefix + content
         8 +                                                         // i64 timestamp
         4 + $masters_count * std::mem::size_of::<RealmMaster>() +   // Vec prefix + content
-        4 + $locations_count * std::mem::size_of::<Pubkey>()        // Vec prefix + content
+        4 + $locations_count * std::mem::size_of::<Pubkey>() +      // Vec prefix + content
+        1 + std::mem::size_of::<Pubkey>() +                         // Option + Pubkey
+        std::mem::size_of::<crate::state::Position>()               // Position
     };
 }

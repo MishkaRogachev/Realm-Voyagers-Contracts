@@ -29,3 +29,11 @@ export function getLocationPDA(realmId: string, locationId: string, program: anc
   );
   return pda;
 }
+
+export function getJourneyPDA(realmId: string, player: anchor.web3.PublicKey, program: anchor.Program<any>) {
+  const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("journey"), Buffer.from(realmId), player.toBuffer()],
+    program.programId
+  );
+  return pda;
+}

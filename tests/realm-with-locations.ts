@@ -8,24 +8,23 @@ describe("Test realm with locations", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
+  // Program & keypairs
   const program = anchor.workspace.RealmVoyagers as Program<RealmVoyagers>;
   const realmMaster = anchor.web3.Keypair.generate();
 
+  // Realm & location datas
+  const realmId = "realm_with_locations";
+  var locations = [
+    { id: "rat_castle", name: "Rat Castle", tilemap: "https://example.com/castle-map", tileset: "https://example.com/castle-tileset" },
+    { id: "dungeon_1", name: "Synth Dungeon", tilemap: "https://example.com/dungeon-map", tileset: "https://example.com/dungeon-tileset" },
+    { id: "spaceship", name: "Witchcraft Spaceship", tilemap: "https://example.com/spaceship-map", tileset: "https://example.com/spaceship-tileset" },
+  ];
+
+  // PDAs
+  const realmPDA = getRealmPDA(realmId, program);
+  const locationPDAs = locations.map((location) => getLocationPDA(realmId, location.id, program));
+
   it("Create realm, add some locations, update some and delete", async () => {
-    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
-
-    // Realm & location datas
-    const realmId = "realm_with_locations";
-    var locations = [
-      { id: "rat_castle", name: "Rat Castle", tilemap: "https://example.com/castle-map", tileset: "https://example.com/castle-tileset" },
-      { id: "dungeon_1", name: "Synth Dungeon", tilemap: "https://example.com/dungeon-map", tileset: "https://example.com/dungeon-tileset" },
-      { id: "spaceship", name: "Witchcraft Spaceship", tilemap: "https://example.com/spaceship-map", tileset: "https://example.com/spaceship-tileset" },
-    ];
-
-    // Realm PDA
-    const realmPDA = getRealmPDA(realmId, program);
-    const locationPDAs = locations.map((location) => getLocationPDA(realmId, location.id, program));
-
     // Add listener for events
     let events = [];
     let eventsCount = 0;
@@ -33,7 +32,9 @@ describe("Test realm with locations", () => {
       events.push(event);
     });
 
-    // Create first realm
+    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+
+    // Create the realm
     let tx = await program.methods
       .createRealm(realmId, "Test Realm", "A test realm")
       .accounts({ master: realmMaster.publicKey })
@@ -55,10 +56,8 @@ describe("Test realm with locations", () => {
         .rpc();
       await confirmTransaction(tx);
 
-      // Fetch location
+      // Fetch & assert location
       var locationAccount = await program.account.realmLocation.fetch(locationPDA);
-
-      // Assertions for the first realm
       expect(locationAccount.name).to.equal(location.name);
       expect(locationAccount.tilemap).to.equal(location.tilemap);
       expect(locationAccount.tileset).to.equal(location.tileset);

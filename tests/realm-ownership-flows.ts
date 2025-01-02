@@ -8,25 +8,26 @@ describe("Realm ownership flows", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
+  // Program & keypairs
   const program = anchor.workspace.RealmVoyagers as Program<RealmVoyagers>;
   const alice = anchor.web3.Keypair.generate();
   const bob = anchor.web3.Keypair.generate();
 
+  // Realm data
+  const realmId = "realm_id_123";
+  const realmName = "Test Realm";
+  const realmDescription = "A test realm";
+  const updatedRealmName = "Updated Realm Name";
+  const updatedRealmDescription = "Updated Realm Description";
+  const updatedRealmName2 = "Updated Realm Name 2";
+  const updatedRealmDescription2 = "Updated Realm Description 2";
+
+  // Realm PDA
+  const realmPDA = getRealmPDA(realmId, program);
+
   it("Alice creates a realm and transfers ownership to bob", async () => {
     await airdrop(alice.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
     await airdrop(bob.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
-
-    // Realm data
-    const realmId = "realm_id_123";
-    const realmName = "Test Realm";
-    const realmDescription = "A test realm";
-    const updatedRealmName = "Updated Realm Name";
-    const updatedRealmDescription = "Updated Realm Description";
-    const updatedRealmName2 = "Updated Realm Name 2";
-    const updatedRealmDescription2 = "Updated Realm Description 2";
-
-    // Realm PDA
-    const realmPDA = getRealmPDA(realmId, program);
 
     // Alice creates a realm
     let tx = await program.methods

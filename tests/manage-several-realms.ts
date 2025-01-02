@@ -8,29 +8,30 @@ describe("Manage several realms", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
+  // Program & keypairs
   const program = anchor.workspace.RealmVoyagers as Program<RealmVoyagers>;
   const realmMaster = anchor.web3.Keypair.generate();
 
+  // Realm datas
+  const firstRealmId = "realm_id_1";
+  const secondRealmId = "realm_id_2";
+  const firstRealmName = "Test Realm 1";
+  const secondRealmName = "Test Realm 2";
+  const firstRealmDescription = "A test realm";
+  const secondRealmDescription = "Another test realm";
+
+  // Realm PDAs
+  const firstRealmPDA = getRealmPDA(firstRealmId, program);
+  const secondRealmPDA = getRealmPDA(secondRealmId, program);
+
   it("Create realm, add some locations and delete", async () => {
-    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
-
-    // Realm datas
-    const firstRealmId = "realm_id_1";
-    const secondRealmId = "realm_id_2";
-    const firstRealmName = "Test Realm 1";
-    const secondRealmName = "Test Realm 2";
-    const firstRealmDescription = "A test realm";
-    const secondRealmDescription = "Another test realm";
-
-    // Realm PDAs
-    const firstRealmPDA = getRealmPDA(firstRealmId, program);
-    const secondRealmPDA = getRealmPDA(secondRealmId, program);
-
     // Add listener for events
     let events = [];
     let listener = program.addEventListener("realmEvent", (event) => {
       events.push(event);
     });
+
+    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
 
     // Create first realm
     let tx = await program.methods

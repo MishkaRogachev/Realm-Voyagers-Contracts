@@ -25,4 +25,7 @@ pub enum ErrorCode {
 
     #[msg("Location not provided")]
     LocationNotProvided,
+
+    #[msg("Realm has no starting location")]
+    RealmHasNoStartingLocation,
 }

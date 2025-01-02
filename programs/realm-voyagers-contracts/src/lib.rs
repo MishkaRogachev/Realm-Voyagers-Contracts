@@ -92,4 +92,18 @@ pub mod realm_voyagers {
     ) -> Result<()> {
         realm_locations::remove_realm_location(ctx, realm_id, location_id)
     }
+
+    pub fn set_realm_starting_point(
+        ctx: Context<SetRealmStartingLocation>,
+        realm_id: String,
+        location_id: String,
+        position: state::Position,
+    ) -> Result<()> {
+        realm_locations::set_realm_starting_point(ctx, realm_id, location_id, position)
+    }
+
+    // Journey
+    pub fn start_journey(ctx: Context<StartJourney>, realm_id: String) -> Result<()> {
+        journeys::start_journey(ctx, realm_id)
+    }
 }
