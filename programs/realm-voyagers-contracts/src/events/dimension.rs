@@ -1,23 +1,15 @@
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub enum DimensionEventType {
-    DimensionAdded {
-        name: String,
-        tilemap: String,
-        tileset: String,
-    },
-    DimensionUpdated {
-        name: String,
-        tilemap: String,
-        tileset: String,
-    },
+pub enum RealmDimensionEventType {
+    DimensionAdded { name: String },
+    DimensionRenamed { name: String },
     DimensionRemoved {},
 }
 
 #[event]
-pub struct DimensionEvent {
-    pub event_type: DimensionEventType,
+pub struct RealmDimensionEvent {
+    pub event_type: RealmDimensionEventType,
     pub dimension_pubkey: Pubkey,
     pub realm_pubkey: Pubkey,
 }

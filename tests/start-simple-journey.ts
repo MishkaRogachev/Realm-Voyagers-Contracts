@@ -44,7 +44,7 @@ describe("Test simple journey", () => {
 
     // Add the dimension
     tx = await program.methods
-      .addRealmDimension(realmId, dimension.id, dimension.name, dimension.tileset, dimension.tilemap)
+      .addRealmDimension(realmId, dimension.id, dimension.name)
       .accounts({
         master: realmMaster.publicKey,
       })

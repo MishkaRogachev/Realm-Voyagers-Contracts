@@ -66,21 +66,17 @@ pub mod realm_voyagers {
         realm_id: String,
         dimension_id: String,
         name: String,
-        tileset: String,
-        tilemap: String,
     ) -> Result<()> {
-        dimensions::add_realm_dimension(ctx, realm_id, dimension_id, name, tileset, tilemap)
+        dimensions::add_realm_dimension(ctx, realm_id, dimension_id, name)
     }
 
-    pub fn update_realm_dimension(
-        ctx: Context<UpdateRealmDimension>,
+    pub fn rename_realm_dimension(
+        ctx: Context<RenameRealmDimension>,
         realm_id: String,
         dimension_id: String,
         name: String,
-        tileset: String,
-        tilemap: String,
     ) -> Result<()> {
-        dimensions::update_realm_dimension(ctx, realm_id, dimension_id, name, tileset, tilemap)
+        dimensions::rename_realm_dimension(ctx, realm_id, dimension_id, name)
     }
 
     pub fn remove_realm_dimension(

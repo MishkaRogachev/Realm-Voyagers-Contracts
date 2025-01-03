@@ -6,7 +6,7 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, dimension_id: String, name: String, tileset: String, tilemap: String)]
+#[instruction(realm_id: String, dimension_id: String, name: String)]
 pub struct AddRealmDimension<'info> {
     #[account(
         mut,
@@ -25,7 +25,7 @@ pub struct AddRealmDimension<'info> {
     #[account(
         init,
         payer = master,
-        space = crate::realm_dimension_space!(name, tileset, tilemap),
+        space = crate::realm_dimension_space!(name, vec![]),
         seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump
     )]
@@ -47,18 +47,8 @@ pub fn add_realm_dimension(
     _realm_id: String,
     _dimension_id: String,
     name: String,
-    tileset: String,
-    tilemap: String,
 ) -> Result<()> {
     require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
-    require!(
-        tileset.len() <= MAX_RESOURCE_PATH_LEN,
-        ErrorCode::ResourcePathTooLong
-    );
-    require!(
-        tilemap.len() <= MAX_RESOURCE_PATH_LEN,
-        ErrorCode::ResourcePathTooLong
-    );
 
     let realm = &mut ctx.accounts.realm;
     let dimension = &mut ctx.accounts.dimension;
@@ -67,8 +57,6 @@ pub fn add_realm_dimension(
     dimension.owner = *ctx.accounts.master.key;
 
     dimension.name = name.clone();
-    dimension.tileset = tileset.clone();
-    dimension.tilemap = tilemap.clone();
 
     realm.dimensions.push(dimension.key());
     if realm.starting_dimension.is_none() {
@@ -76,22 +64,18 @@ pub fn add_realm_dimension(
     }
     realm.updated_at = Clock::get()?.unix_timestamp;
 
-    emit!(DimensionEvent {
+    emit!(RealmDimensionEvent {
         realm_pubkey: realm.key(),
         dimension_pubkey: dimension.key(),
-        event_type: DimensionEventType::DimensionAdded {
-            name,
-            tilemap,
-            tileset
-        },
+        event_type: RealmDimensionEventType::DimensionAdded { name },
     });
 
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, dimension_id: String, name: String, tileset: String, tilemap: String)]
-pub struct UpdateRealmDimension<'info> {
+#[instruction(realm_id: String, dimension_id: String, name: String)]
+pub struct RenameRealmDimension<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
@@ -103,7 +87,7 @@ pub struct UpdateRealmDimension<'info> {
         mut,
         seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump,
-        realloc = crate::realm_dimension_space!(name, tileset, tilemap),
+        realloc = crate::realm_dimension_space!(name, vec![]),
         realloc::payer = master,
         realloc::zero = false
     )]
@@ -120,37 +104,21 @@ pub struct UpdateRealmDimension<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn update_realm_dimension(
-    ctx: Context<UpdateRealmDimension>,
+pub fn rename_realm_dimension(
+    ctx: Context<RenameRealmDimension>,
     _realm_id: String,
     _dimension_id: String,
     name: String,
-    tileset: String,
-    tilemap: String,
 ) -> Result<()> {
     require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
-    require!(
-        tileset.len() <= MAX_RESOURCE_PATH_LEN,
-        ErrorCode::ResourcePathTooLong
-    );
-    require!(
-        tilemap.len() <= MAX_RESOURCE_PATH_LEN,
-        ErrorCode::ResourcePathTooLong
-    );
 
     let dimension = &mut ctx.accounts.dimension;
     dimension.name = name.clone();
-    dimension.tileset = tileset.clone();
-    dimension.tilemap = tilemap.clone();
 
-    emit!(DimensionEvent {
+    emit!(RealmDimensionEvent {
         realm_pubkey: ctx.accounts.realm.key(),
         dimension_pubkey: dimension.key(),
-        event_type: DimensionEventType::DimensionUpdated {
-            name,
-            tilemap,
-            tileset
-        },
+        event_type: RealmDimensionEventType::DimensionRenamed { name },
     });
 
     Ok(())
@@ -209,10 +177,10 @@ pub fn remove_realm_dimension(
     }
     realm.updated_at = Clock::get()?.unix_timestamp;
 
-    emit!(DimensionEvent {
+    emit!(RealmDimensionEvent {
         realm_pubkey: ctx.accounts.realm.key(),
         dimension_pubkey: ctx.accounts.dimension.key(),
-        event_type: DimensionEventType::DimensionRemoved {},
+        event_type: RealmDimensionEventType::DimensionRemoved {},
     });
 
     Ok(())
