@@ -14,6 +14,7 @@ describe("Test realm with locations", () => {
 
   // Realm & location datas
   const realmId = "realm_with_locations";
+  const realmDescription = { name: "Test Realm", details: "A test realm details", logo: "https://example.com/logo123" };
   var locations = [
     { id: "rat_castle", name: "Rat Castle", tilemap: "https://example.com/castle-map", tileset: "https://example.com/castle-tileset" },
     { id: "dungeon_1", name: "Synth Dungeon", tilemap: "https://example.com/dungeon-map", tileset: "https://example.com/dungeon-tileset" },
@@ -36,7 +37,7 @@ describe("Test realm with locations", () => {
 
     // Create the realm
     let tx = await program.methods
-      .createRealm(realmId, "Test Realm", "A test realm")
+      .createRealm(realmId, realmDescription)
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();

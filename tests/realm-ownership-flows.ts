@@ -15,12 +15,9 @@ describe("Realm ownership flows", () => {
 
   // Realm data
   const realmId = "realm_id_123";
-  const realmName = "Test Realm";
-  const realmDescription = "A test realm";
-  const updatedRealmName = "Updated Realm Name";
-  const updatedRealmDescription = "Updated Realm Description";
-  const updatedRealmName2 = "Updated Realm Name 2";
-  const updatedRealmDescription2 = "Updated Realm Description 2";
+  const realmDescription = { name: "Test Realm", details: "A test realm details", logo: "https://example.com/logo123" };
+  const updatedRealmDescription = { name: "Test Realm 1", details: "An updated test realm details", logo: "https://example.com/logo123" };
+  const updatedRealmDescription2 = { name: "Test Realm 123", details: "Another updated test realm details", logo: "https://example.com/logo123" };
 
   // Realm PDA
   const realmPDA = getRealmPDA(realmId, program);
@@ -31,7 +28,7 @@ describe("Realm ownership flows", () => {
 
     // Alice creates a realm
     let tx = await program.methods
-      .createRealm(realmId, realmName, realmDescription)
+      .createRealm(realmId, realmDescription)
       .accounts({
          master: alice.publicKey,
       })
@@ -41,12 +38,11 @@ describe("Realm ownership flows", () => {
 
     // Fetch & check realm account after creation
     var realmAccount = await program.account.realm.fetch(realmPDA);
-    expect(realmAccount.name).to.equal(realmName);
-    expect(realmAccount.description).to.equal(realmDescription);
+    expect(realmAccount.description).to.deep.equal(realmDescription);
 
     // Alice updates the realm successfully
     tx = await program.methods
-    .updateRealm(realmId, updatedRealmName, updatedRealmDescription)
+    .updateRealmDescription(realmId, updatedRealmDescription)
       .accounts({ master: alice.publicKey })
       .signers([alice])
       .rpc();
@@ -54,13 +50,12 @@ describe("Realm ownership flows", () => {
 
     // Fetch & check realm account after update
     realmAccount = await program.account.realm.fetch(realmPDA);
-    expect(realmAccount.name).to.equal(updatedRealmName);
-    expect(realmAccount.description).to.equal(updatedRealmDescription);
+    expect(realmAccount.description).to.deep.equal(updatedRealmDescription);
 
     // Bob tries to update the realm, and it fails
     try {
       tx = await program.methods
-        .updateRealm(realmId, "Unauthorized Update", "Should Fail")
+        .updateRealmDescription(realmId, updatedRealmDescription2)
         .accounts({ master: bob.publicKey })
         .signers([bob])
         .rpc();
@@ -72,8 +67,7 @@ describe("Realm ownership flows", () => {
 
     // Fetch & check realm account after failed update
     realmAccount = await program.account.realm.fetch(realmPDA);
-    expect(realmAccount.name).to.equal(updatedRealmName);
-    expect(realmAccount.description).to.equal(updatedRealmDescription);
+    expect(realmAccount.description).to.deep.equal(updatedRealmDescription);
     expect(realmAccount.masters.length).to.equal(1);
     expect(realmAccount.masters[0].pubkey.toBase58()).to.equal(alice.publicKey.toBase58());
     expect(realmAccount.masters[0].role).to.deep.equal({ owner: {} });
@@ -109,7 +103,7 @@ describe("Realm ownership flows", () => {
 
     // Bob tries to update the realm successfully
     tx = await program.methods
-      .updateRealm(realmId, updatedRealmName2, updatedRealmDescription2)
+      .updateRealmDescription(realmId, updatedRealmDescription2)
       .accounts({ master: bob.publicKey })
       .signers([bob])
       .rpc();
@@ -117,8 +111,7 @@ describe("Realm ownership flows", () => {
 
     // Fetch & check realm account after Bob's update
     realmAccount = await program.account.realm.fetch(realmPDA);
-    expect(realmAccount.name).to.equal(updatedRealmName2);
-    expect(realmAccount.description).to.equal(updatedRealmDescription2);
+    expect(realmAccount.description).to.deep.equal(updatedRealmDescription2);
 
     // Bob tries to transfer ownership to himself, and it fails
     try {
@@ -174,7 +167,7 @@ describe("Realm ownership flows", () => {
     // Alice tries to update the realm, and it fails
     try {
       tx = await program.methods
-        .updateRealm(realmId, "Unauthorized Update", "Should Fail")
+        .updateRealmDescription(realmId, realmDescription)
         .accounts({ master: alice.publicKey })
         .signers([alice])
         .rpc();

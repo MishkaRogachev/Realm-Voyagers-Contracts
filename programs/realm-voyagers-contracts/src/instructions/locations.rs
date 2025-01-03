@@ -13,7 +13,6 @@ pub struct AddRealmLocation<'info> {
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
-            realm.name,
             realm.description,
             realm.masters.len(),
             realm.locations.len() + 1 // Increment
@@ -75,6 +74,7 @@ pub fn add_realm_location(
     if realm.starting_location.is_none() {
         realm.starting_location = Some(location.key());
     }
+    realm.updated_at = Clock::get()?.unix_timestamp;
 
     emit!(LocationEvent {
         realm_pubkey: realm.key(),
@@ -164,7 +164,6 @@ pub struct RemoveRealmLocation<'info> {
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
-            realm.name,
             realm.description,
             realm.masters.len(),
             realm.locations.len() - 1 // Decrement
@@ -208,6 +207,7 @@ pub fn remove_realm_location(
         realm.starting_location = None;
         realm.starting_position = Position::default();
     }
+    realm.updated_at = Clock::get()?.unix_timestamp;
 
     emit!(LocationEvent {
         realm_pubkey: ctx.accounts.realm.key(),
@@ -252,8 +252,10 @@ pub fn set_realm_starting_point(
     _location_id: String,
     position: Position,
 ) -> Result<()> {
-    ctx.accounts.realm.starting_location = Some(ctx.accounts.location.key());
-    ctx.accounts.realm.starting_position = position;
+    let realm = &mut ctx.accounts.realm;
+    realm.starting_location = Some(ctx.accounts.location.key());
+    realm.starting_position = position;
+    realm.updated_at = Clock::get()?.unix_timestamp;
 
     Ok(())
 }

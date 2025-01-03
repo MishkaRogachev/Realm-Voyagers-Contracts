@@ -15,6 +15,7 @@ describe("Test simple journey", () => {
 
   // Realm & location datas
   const realmId = "journey_realm";
+  const realmDescription = { name: "Test Realm", details: "A test realm details", logo: "https://example.com/logo123" };
   const location = {
     id: "dungeon_1",
     name: "Dungeon",
@@ -35,7 +36,7 @@ describe("Test simple journey", () => {
 
     // Create the realm
     let tx = await program.methods
-      .createRealm(realmId, "Test Realm", "A test realm")
+      .createRealm(realmId, realmDescription)
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();

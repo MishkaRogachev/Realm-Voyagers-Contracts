@@ -18,19 +18,17 @@ pub mod realm_voyagers {
     pub fn create_realm(
         ctx: Context<CreateRealm>,
         realm_id: String,
-        name: String,
-        description: String,
+        description: state::RealmDescription,
     ) -> Result<()> {
-        realms::create_realm(ctx, realm_id, name, description)
+        realms::create_realm(ctx, realm_id, description)
     }
 
-    pub fn update_realm(
-        ctx: Context<UpdateRealm>,
+    pub fn update_realm_description(
+        ctx: Context<UpdateRealmDescription>,
         realm_id: String,
-        name: String,
-        description: String,
+        description: state::RealmDescription,
     ) -> Result<()> {
-        realms::update_realm(ctx, realm_id, name, description)
+        realms::update_realm_description(ctx, realm_id, description)
     }
 
     pub fn delete_realm(ctx: Context<DeleteRealm>, realm_id: String) -> Result<()> {

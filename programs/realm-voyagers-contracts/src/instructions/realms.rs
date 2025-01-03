@@ -6,12 +6,12 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, name: String, description: String)]
+#[instruction(realm_id: String, description: RealmDescription)]
 pub struct CreateRealm<'info> {
     #[account(
         init,
         payer = master,
-        space = crate::realm_space!(name, description, 1, 0),
+        space = crate::realm_space!(description, 1, 0),
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump
     )]
@@ -26,19 +26,14 @@ pub struct CreateRealm<'info> {
 pub fn create_realm(
     ctx: Context<CreateRealm>,
     _realm_id: String,
-    name: String,
-    description: String,
+    description: RealmDescription,
 ) -> Result<()> {
-    require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
-    require!(
-        description.len() <= MAX_DESCRIPTION_LEN,
-        ErrorCode::DescriptionTooLong
-    );
+    description.validate()?;
 
     let realm = &mut ctx.accounts.realm;
-    realm.name = name.clone();
     realm.description = description.clone();
     realm.created_at = Clock::get()?.unix_timestamp;
+    realm.updated_at = realm.created_at;
     realm.masters.push(RealmMaster {
         pubkey: *ctx.accounts.master.key,
         role: RealmMasterRole::Owner,
@@ -46,21 +41,20 @@ pub fn create_realm(
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
-        event_type: RealmEventType::RealmCreated { name, description },
+        event_type: RealmEventType::RealmCreated { description },
     });
 
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, name: String, description: String)]
-pub struct UpdateRealm<'info> {
+#[instruction(realm_id: String, description: RealmDescription)]
+pub struct UpdateRealmDescription<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
-            name,
             description,
             realm.masters.len(),
             realm.locations.len()
@@ -81,25 +75,20 @@ pub struct UpdateRealm<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn update_realm(
-    ctx: Context<UpdateRealm>,
+pub fn update_realm_description(
+    ctx: Context<UpdateRealmDescription>,
     _realm_id: String,
-    name: String,
-    description: String,
+    description: RealmDescription,
 ) -> Result<()> {
-    require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
-    require!(
-        description.len() <= MAX_DESCRIPTION_LEN,
-        ErrorCode::DescriptionTooLong
-    );
+    description.validate()?;
 
     let realm = &mut ctx.accounts.realm;
-    realm.name = name.clone();
     realm.description = description.clone();
+    realm.updated_at = Clock::get()?.unix_timestamp;
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
-        event_type: RealmEventType::RealmUpdated { name, description },
+        event_type: RealmEventType::RealmDescriptionUpdated { description },
     });
 
     Ok(())

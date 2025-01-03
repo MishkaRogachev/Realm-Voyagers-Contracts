@@ -5,12 +5,10 @@ use crate::state::*;
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum RealmEventType {
     RealmCreated {
-        name: String,
-        description: String,
+        description: RealmDescription,
     },
-    RealmUpdated {
-        name: String,
-        description: String,
+    RealmDescriptionUpdated {
+        description: RealmDescription,
     },
     RealmDeleted {},
 

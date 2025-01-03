@@ -17,8 +17,8 @@ pub enum ErrorCode {
     #[msg("Name is too long")]
     NameTooLong,
 
-    #[msg("Description is too long")]
-    DescriptionTooLong,
+    #[msg("Deatils is too long")]
+    DetailsTooLong,
 
     #[msg("Resource path is too long")]
     ResourcePathTooLong,

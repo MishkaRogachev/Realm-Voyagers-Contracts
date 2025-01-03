@@ -13,7 +13,6 @@ pub struct AddRealmMaster<'info> {
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
-            realm.name,
             realm.description,
             realm.masters.len() + 1, // Increment
             realm.locations.len()
@@ -50,6 +49,7 @@ pub fn add_realm_master(
     };
 
     realm.masters.push(master.clone());
+    realm.updated_at = Clock::get()?.unix_timestamp;
 
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
@@ -67,7 +67,6 @@ pub struct RemoveRealmMaster<'info> {
         seeds = [REALM_SEED, realm_id.as_bytes()],
         bump,
         realloc = crate::realm_space!(
-            realm.name,
             realm.description,
             realm.masters.len() - 1, // Decrement
             realm.locations.len()
@@ -109,6 +108,8 @@ pub fn remove_realm_master(
         .ok_or(ErrorCode::RealmMasterNotFound)?;
 
     let master = realm.masters.swap_remove(master_index);
+    realm.updated_at = Clock::get()?.unix_timestamp;
+
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
         event_type: RealmEventType::RealmMasterRemoved { master },
@@ -167,6 +168,7 @@ pub fn transfer_realm_ownership(
             master.role = RealmMasterRole::Admin;
         }
     });
+    realm.updated_at = Clock::get()?.unix_timestamp;
 
     // Emit event
     emit!(RealmEvent {
