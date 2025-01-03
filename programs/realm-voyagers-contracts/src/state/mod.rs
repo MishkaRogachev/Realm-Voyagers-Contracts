@@ -1,11 +1,11 @@
 pub mod common;
+pub mod dimension;
 pub mod journey;
-pub mod location;
 pub mod master;
 pub mod realm;
 
 pub use common::*;
+pub use dimension::*;
 pub use journey::*;
-pub use location::*;
 pub use master::*;
 pub use realm::*;

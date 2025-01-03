@@ -22,7 +22,7 @@ describe("Manage several realms", () => {
   const firstRealmPDA = getRealmPDA(firstRealmId, program);
   const secondRealmPDA = getRealmPDA(secondRealmId, program);
 
-  it("Create realm, add some locations and delete", async () => {
+  it("Create and update and delete two realms", async () => {
     // Add listener for events
     let events = [];
     let listener = program.addEventListener("realmEvent", (event) => {

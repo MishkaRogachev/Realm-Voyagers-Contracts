@@ -60,44 +60,44 @@ pub mod realm_voyagers {
         masters::transfer_realm_ownership(ctx, realm_id, new_owner_pubkey)
     }
 
-    // Realm Locations
-    pub fn add_realm_location(
-        ctx: Context<AddRealmLocation>,
+    // Realm Dimensions
+    pub fn add_realm_dimension(
+        ctx: Context<AddRealmDimension>,
         realm_id: String,
-        location_id: String,
+        dimension_id: String,
         name: String,
         tileset: String,
         tilemap: String,
     ) -> Result<()> {
-        locations::add_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
+        dimensions::add_realm_dimension(ctx, realm_id, dimension_id, name, tileset, tilemap)
     }
 
-    pub fn update_realm_location(
-        ctx: Context<UpdateRealmLocation>,
+    pub fn update_realm_dimension(
+        ctx: Context<UpdateRealmDimension>,
         realm_id: String,
-        location_id: String,
+        dimension_id: String,
         name: String,
         tileset: String,
         tilemap: String,
     ) -> Result<()> {
-        locations::update_realm_location(ctx, realm_id, location_id, name, tileset, tilemap)
+        dimensions::update_realm_dimension(ctx, realm_id, dimension_id, name, tileset, tilemap)
     }
 
-    pub fn remove_realm_location(
-        ctx: Context<RemoveRealmLocation>,
+    pub fn remove_realm_dimension(
+        ctx: Context<RemoveRealmDimension>,
         realm_id: String,
-        location_id: String,
+        dimension_id: String,
     ) -> Result<()> {
-        locations::remove_realm_location(ctx, realm_id, location_id)
+        dimensions::remove_realm_dimension(ctx, realm_id, dimension_id)
     }
 
     pub fn set_realm_starting_point(
-        ctx: Context<SetRealmStartingLocation>,
+        ctx: Context<SetRealmStartingDimension>,
         realm_id: String,
-        location_id: String,
+        dimension_id: String,
         position: state::Position,
     ) -> Result<()> {
-        locations::set_realm_starting_point(ctx, realm_id, location_id, position)
+        dimensions::set_realm_starting_point(ctx, realm_id, dimension_id, position)
     }
 
     // Journey

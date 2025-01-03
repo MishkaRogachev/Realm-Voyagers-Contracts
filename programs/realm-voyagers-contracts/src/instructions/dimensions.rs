@@ -6,8 +6,8 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, location_id: String, name: String, tileset: String, tilemap: String)]
-pub struct AddRealmLocation<'info> {
+#[instruction(realm_id: String, dimension_id: String, name: String, tileset: String, tilemap: String)]
+pub struct AddRealmDimension<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
@@ -15,7 +15,7 @@ pub struct AddRealmLocation<'info> {
         realloc = crate::realm_space!(
             realm.description,
             realm.masters.len(),
-            realm.locations.len() + 1 // Increment
+            realm.dimensions.len() + 1 // Increment
         ),
         realloc::payer = master,
         realloc::zero = false
@@ -25,16 +25,16 @@ pub struct AddRealmLocation<'info> {
     #[account(
         init,
         payer = master,
-        space = crate::realm_location_space!(name, tileset, tilemap),
-        seeds = [LOCATION_SEED, realm_id.as_bytes(), location_id.as_bytes()],
+        space = crate::realm_dimension_space!(name, tileset, tilemap),
+        seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump
     )]
-    pub location: Account<'info, RealmLocation>,
+    pub dimension: Account<'info, RealmDimension>,
 
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() && m.can_add_realm_location()
+            m.pubkey == master.key() && m.can_add_realm_dimension()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -42,10 +42,10 @@ pub struct AddRealmLocation<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn add_realm_location(
-    ctx: Context<AddRealmLocation>,
+pub fn add_realm_dimension(
+    ctx: Context<AddRealmDimension>,
     _realm_id: String,
-    _location_id: String,
+    _dimension_id: String,
     name: String,
     tileset: String,
     tilemap: String,
@@ -61,25 +61,25 @@ pub fn add_realm_location(
     );
 
     let realm = &mut ctx.accounts.realm;
-    let location = &mut ctx.accounts.location;
+    let dimension = &mut ctx.accounts.dimension;
 
-    location.realm = realm.key();
-    location.owner = *ctx.accounts.master.key;
+    dimension.realm = realm.key();
+    dimension.owner = *ctx.accounts.master.key;
 
-    location.name = name.clone();
-    location.tileset = tileset.clone();
-    location.tilemap = tilemap.clone();
+    dimension.name = name.clone();
+    dimension.tileset = tileset.clone();
+    dimension.tilemap = tilemap.clone();
 
-    realm.locations.push(location.key());
-    if realm.starting_location.is_none() {
-        realm.starting_location = Some(location.key());
+    realm.dimensions.push(dimension.key());
+    if realm.starting_dimension.is_none() {
+        realm.starting_dimension = Some(dimension.key());
     }
     realm.updated_at = Clock::get()?.unix_timestamp;
 
-    emit!(LocationEvent {
+    emit!(DimensionEvent {
         realm_pubkey: realm.key(),
-        location_pubkey: location.key(),
-        event_type: LocationEventType::LocationAdded {
+        dimension_pubkey: dimension.key(),
+        event_type: DimensionEventType::DimensionAdded {
             name,
             tilemap,
             tileset
@@ -90,8 +90,8 @@ pub fn add_realm_location(
 }
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, location_id: String, name: String, tileset: String, tilemap: String)]
-pub struct UpdateRealmLocation<'info> {
+#[instruction(realm_id: String, dimension_id: String, name: String, tileset: String, tilemap: String)]
+pub struct UpdateRealmDimension<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
@@ -101,18 +101,18 @@ pub struct UpdateRealmLocation<'info> {
 
     #[account(
         mut,
-        seeds = [LOCATION_SEED, realm_id.as_bytes(), location_id.as_bytes()],
+        seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump,
-        realloc = crate::realm_location_space!(name, tileset, tilemap),
+        realloc = crate::realm_dimension_space!(name, tileset, tilemap),
         realloc::payer = master,
         realloc::zero = false
     )]
-    pub location: Account<'info, RealmLocation>,
+    pub dimension: Account<'info, RealmDimension>,
 
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() && m.can_manage_realm_location(&location)
+            m.pubkey == master.key() && m.can_manage_realm_dimension(&dimension)
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -120,10 +120,10 @@ pub struct UpdateRealmLocation<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn update_realm_location(
-    ctx: Context<UpdateRealmLocation>,
+pub fn update_realm_dimension(
+    ctx: Context<UpdateRealmDimension>,
     _realm_id: String,
-    _location_id: String,
+    _dimension_id: String,
     name: String,
     tileset: String,
     tilemap: String,
@@ -138,15 +138,15 @@ pub fn update_realm_location(
         ErrorCode::ResourcePathTooLong
     );
 
-    let location = &mut ctx.accounts.location;
-    location.name = name.clone();
-    location.tileset = tileset.clone();
-    location.tilemap = tilemap.clone();
+    let dimension = &mut ctx.accounts.dimension;
+    dimension.name = name.clone();
+    dimension.tileset = tileset.clone();
+    dimension.tilemap = tilemap.clone();
 
-    emit!(LocationEvent {
+    emit!(DimensionEvent {
         realm_pubkey: ctx.accounts.realm.key(),
-        location_pubkey: location.key(),
-        event_type: LocationEventType::LocationUpdated {
+        dimension_pubkey: dimension.key(),
+        event_type: DimensionEventType::DimensionUpdated {
             name,
             tilemap,
             tileset
@@ -157,8 +157,8 @@ pub fn update_realm_location(
 }
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, location_id: String)]
-pub struct RemoveRealmLocation<'info> {
+#[instruction(realm_id: String, dimension_id: String)]
+pub struct RemoveRealmDimension<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
@@ -166,7 +166,7 @@ pub struct RemoveRealmLocation<'info> {
         realloc = crate::realm_space!(
             realm.description,
             realm.masters.len(),
-            realm.locations.len() - 1 // Decrement
+            realm.dimensions.len() - 1 // Decrement
         ),
         realloc::payer = master,
         realloc::zero = false
@@ -175,16 +175,16 @@ pub struct RemoveRealmLocation<'info> {
 
     #[account(
         mut,
-        seeds = [LOCATION_SEED, realm_id.as_bytes(), location_id.as_bytes()],
+        seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump,
         close = master
     )]
-    pub location: Account<'info, RealmLocation>,
+    pub dimension: Account<'info, RealmDimension>,
 
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() && m.can_manage_realm_location(&location)
+            m.pubkey == master.key() && m.can_manage_realm_dimension(&dimension)
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -192,35 +192,35 @@ pub struct RemoveRealmLocation<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn remove_realm_location(
-    ctx: Context<RemoveRealmLocation>,
+pub fn remove_realm_dimension(
+    ctx: Context<RemoveRealmDimension>,
     _realm_id: String,
-    _location_id: String,
+    _dimension_id: String,
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
 
     realm
-        .locations
-        .retain(|l| l != &ctx.accounts.location.key());
+        .dimensions
+        .retain(|l| l != &ctx.accounts.dimension.key());
 
-    if realm.starting_location == Some(ctx.accounts.location.key()) {
-        realm.starting_location = None;
+    if realm.starting_dimension == Some(ctx.accounts.dimension.key()) {
+        realm.starting_dimension = None;
         realm.starting_position = Position::default();
     }
     realm.updated_at = Clock::get()?.unix_timestamp;
 
-    emit!(LocationEvent {
+    emit!(DimensionEvent {
         realm_pubkey: ctx.accounts.realm.key(),
-        location_pubkey: ctx.accounts.location.key(),
-        event_type: LocationEventType::LocationRemoved {},
+        dimension_pubkey: ctx.accounts.dimension.key(),
+        event_type: DimensionEventType::DimensionRemoved {},
     });
 
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, location_id: String)]
-pub struct SetRealmStartingLocation<'info> {
+#[instruction(realm_id: String, dimension_id: String)]
+pub struct SetRealmStartingDimension<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
@@ -230,15 +230,15 @@ pub struct SetRealmStartingLocation<'info> {
 
     #[account(
         mut,
-        seeds = [LOCATION_SEED, realm_id.as_bytes(), location_id.as_bytes()],
+        seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump,
     )]
-    pub location: Account<'info, RealmLocation>,
+    pub dimension: Account<'info, RealmDimension>,
 
     #[account(
         mut,
         constraint = realm.masters.iter().any(|m|
-            m.pubkey == master.key() && m.can_set_realm_starting_location()
+            m.pubkey == master.key() && m.can_set_realm_starting_point()
         ) @ ErrorCode::UnauthorizedRealmMaster
     )]
     pub master: Signer<'info>,
@@ -247,13 +247,13 @@ pub struct SetRealmStartingLocation<'info> {
 }
 
 pub fn set_realm_starting_point(
-    ctx: Context<SetRealmStartingLocation>,
+    ctx: Context<SetRealmStartingDimension>,
     _realm_id: String,
-    _location_id: String,
+    _dimension_id: String,
     position: Position,
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
-    realm.starting_location = Some(ctx.accounts.location.key());
+    realm.starting_dimension = Some(ctx.accounts.dimension.key());
     realm.starting_position = position;
     realm.updated_at = Clock::get()?.unix_timestamp;
 

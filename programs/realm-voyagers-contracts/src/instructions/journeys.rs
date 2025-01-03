@@ -29,15 +29,15 @@ pub fn start_journey(ctx: Context<StartJourney>, _realm_id: String) -> Result<()
     let realm = &ctx.accounts.realm;
 
     require!(
-        realm.starting_location.is_some(),
-        ErrorCode::RealmHasNoStartingLocation
+        realm.starting_dimension.is_some(),
+        ErrorCode::RealmHasNoStartingDimension
     );
 
     let journey = &mut ctx.accounts.journey;
     journey.realm = realm.key();
     journey.started_at = Clock::get()?.unix_timestamp;
     journey.player = *ctx.accounts.player.key;
-    journey.location = realm.starting_location.unwrap();
+    journey.dimension = realm.starting_dimension.unwrap();
     journey.position = realm.starting_position;
 
     Ok(())

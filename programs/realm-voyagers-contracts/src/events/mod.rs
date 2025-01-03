@@ -1,5 +1,5 @@
-pub mod location;
+pub mod dimension;
 pub mod realm;
 
-pub use location::*;
+pub use dimension::*;
 pub use realm::*;

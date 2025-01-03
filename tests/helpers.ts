@@ -22,9 +22,9 @@ export function getRealmPDA(realmId: string, program: anchor.Program<any>): anch
   return pda;
 }
 
-export function getLocationPDA(realmId: string, locationId: string, program: anchor.Program<any>) {
+export function getDimensionPDA(realmId: string, dimensionId: string, program: anchor.Program<any>) {
   const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("location"), Buffer.from(realmId), Buffer.from(locationId)],
+    [Buffer.from("dimension"), Buffer.from(realmId), Buffer.from(dimensionId)],
     program.programId
   );
   return pda;

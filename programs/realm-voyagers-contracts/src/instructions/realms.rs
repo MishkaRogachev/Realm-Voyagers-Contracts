@@ -57,7 +57,7 @@ pub struct UpdateRealmDescription<'info> {
         realloc = crate::realm_space!(
             description,
             realm.masters.len(),
-            realm.locations.len()
+            realm.dimensions.len()
         ),
         realloc::payer = master,
         realloc::zero = false
@@ -119,19 +119,19 @@ pub struct DeleteRealm<'info> {
 pub fn delete_realm(ctx: Context<DeleteRealm>, _realm_id: String) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
 
-    // Iterate over and close all locations linked to the realm
-    for location_pubkey in realm.locations.iter() {
-        let location_info = ctx
+    // Iterate over and close all dimensions linked to the realm
+    for dimension_pubkey in realm.dimensions.iter() {
+        let dimension_info = ctx
             .remaining_accounts
             .iter()
-            .find(|account_info| account_info.key == location_pubkey)
-            .ok_or(ErrorCode::LocationNotProvided)?;
+            .find(|account_info| account_info.key == dimension_pubkey)
+            .ok_or(ErrorCode::DimensionNotProvided)?;
 
-        // TODO: transfer to location owner
+        // TODO: transfer to dimension owner
 
-        **ctx.accounts.master.lamports.borrow_mut() += location_info.lamports();
-        **location_info.lamports.borrow_mut() = 0;
-        location_info.try_borrow_mut_data()?.fill(0);
+        **ctx.accounts.master.lamports.borrow_mut() += dimension_info.lamports();
+        **dimension_info.lamports.borrow_mut() = 0;
+        dimension_info.try_borrow_mut_data()?.fill(0);
     }
 
     emit!(RealmEvent {

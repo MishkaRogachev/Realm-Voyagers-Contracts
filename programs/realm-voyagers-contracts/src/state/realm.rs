@@ -18,15 +18,15 @@ pub struct Realm {
     pub updated_at: i64,
 
     pub masters: Vec<crate::state::RealmMaster>,
-    pub locations: Vec<Pubkey>,
+    pub dimensions: Vec<Pubkey>,
 
-    pub starting_location: Option<Pubkey>,
+    pub starting_dimension: Option<Pubkey>,
     pub starting_position: crate::state::Position,
 }
 
 #[macro_export]
 macro_rules! realm_space {
-    ($description:expr, $masters_count:expr, $locations_count:expr) => {
+    ($description:expr, $masters_count:expr, $dimension_count:expr) => {
         // From https://book.anchor-lang.com/anchor_references/space.html
         8 +                                                                         // Discriminator
         4 + $description.name.len() +                                               // String prefix + content
@@ -35,7 +35,7 @@ macro_rules! realm_space {
         8 +                                                                         // i64 timestamp
         8 +                                                                         // i64 timestamp
         4 + $masters_count * std::mem::size_of::<crate::state::RealmMaster>() +     // Vec prefix + content
-        4 + $locations_count * std::mem::size_of::<Pubkey>() +                      // Vec prefix + content
+        4 + $dimension_count * std::mem::size_of::<Pubkey>() +                      // Vec prefix + content
         1 + std::mem::size_of::<Pubkey>() +                                         // Option + Pubkey
         std::mem::size_of::<crate::state::Position>()                               // Position
     };

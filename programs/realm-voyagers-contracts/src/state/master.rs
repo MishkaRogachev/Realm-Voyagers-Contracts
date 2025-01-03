@@ -26,19 +26,19 @@ impl RealmMaster {
         matches!(self.role, RealmMasterRole::Owner)
     }
 
-    pub fn can_add_realm_location(&self) -> bool {
+    pub fn can_add_realm_dimension(&self) -> bool {
         matches!(self.role, RealmMasterRole::Owner | RealmMasterRole::Admin)
     }
 
-    pub fn can_manage_realm_location(&self, location: &crate::state::RealmLocation) -> bool {
+    pub fn can_manage_realm_dimension(&self, dimension: &crate::state::RealmDimension) -> bool {
         match self.role {
             RealmMasterRole::Owner => true,
-            RealmMasterRole::Admin => location.owner == self.pubkey,
+            RealmMasterRole::Admin => dimension.owner == self.pubkey,
             RealmMasterRole::Curator => false,
         }
     }
 
-    pub fn can_set_realm_starting_location(&self) -> bool {
+    pub fn can_set_realm_starting_point(&self) -> bool {
         matches!(self.role, RealmMasterRole::Owner)
     }
 }

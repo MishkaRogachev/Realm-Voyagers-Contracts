@@ -7,6 +7,6 @@ pub struct Journey {
     pub player: Pubkey,
     pub started_at: i64,
 
-    pub location: Pubkey,
+    pub dimension: Pubkey,
     pub position: crate::state::Position,
 }

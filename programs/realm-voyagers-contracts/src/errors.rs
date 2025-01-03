@@ -23,9 +23,9 @@ pub enum ErrorCode {
     #[msg("Resource path is too long")]
     ResourcePathTooLong,
 
-    #[msg("Location not provided")]
-    LocationNotProvided,
+    #[msg("Dimension was not provided")]
+    DimensionNotProvided,
 
-    #[msg("Realm has no starting location")]
-    RealmHasNoStartingLocation,
+    #[msg("Realm has no starting dimension")]
+    RealmHasNoStartingDimension,
 }

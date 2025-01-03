@@ -1,23 +1,23 @@
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub enum LocationEventType {
-    LocationAdded {
+pub enum DimensionEventType {
+    DimensionAdded {
         name: String,
         tilemap: String,
         tileset: String,
     },
-    LocationUpdated {
+    DimensionUpdated {
         name: String,
         tilemap: String,
         tileset: String,
     },
-    LocationRemoved {},
+    DimensionRemoved {},
 }
 
 #[event]
-pub struct LocationEvent {
-    pub event_type: LocationEventType,
-    pub location_pubkey: Pubkey,
+pub struct DimensionEvent {
+    pub event_type: DimensionEventType,
+    pub dimension_pubkey: Pubkey,
     pub realm_pubkey: Pubkey,
 }

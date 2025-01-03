@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[account]
-pub struct RealmLocation {
+pub struct RealmDimension {
     pub realm: Pubkey,
     pub owner: Pubkey,
 
@@ -11,7 +11,7 @@ pub struct RealmLocation {
 }
 
 #[macro_export]
-macro_rules! realm_location_space {
+macro_rules! realm_dimension_space {
     ($name:expr, $tileset:expr, $tilemap:expr) => {
         8 +                     // discriminator
         32 +                    // realm pubkey

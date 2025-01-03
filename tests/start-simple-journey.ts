@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { RealmVoyagers } from "../target/types/realm_voyagers";
 import { expect } from "chai";
-import { airdrop, confirmTransaction, getRealmPDA, getLocationPDA, getJourneyPDA } from "./helpers";
+import { airdrop, confirmTransaction, getRealmPDA, getDimensionPDA, getJourneyPDA } from "./helpers";
 
 describe("Test simple journey", () => {
   const provider = anchor.AnchorProvider.env();
@@ -13,10 +13,10 @@ describe("Test simple journey", () => {
   const realmMaster = anchor.web3.Keypair.generate();
   const player = anchor.web3.Keypair.generate();
 
-  // Realm & location datas
+  // Realm & dimension datas
   const realmId = "journey_realm";
   const realmDescription = { name: "Test Realm", details: "A test realm details", logo: "https://example.com/logo123" };
-  const location = {
+  const dimension = {
     id: "dungeon_1",
     name: "Dungeon",
     tilemap: "https://example.com/dungeon-map-1",
@@ -26,10 +26,10 @@ describe("Test simple journey", () => {
 
   // PDAs
   const realmPDA = getRealmPDA(realmId, program);
-  const locationPDA = getLocationPDA(realmId, location.id, program);
+  const dimensionPDA = getDimensionPDA(realmId, dimension.id, program);
   const journeyPDA = getJourneyPDA(realmId, player.publicKey, program);
 
-  it("Create realm, add a location and join it as a player", async () => {
+  it("Create realm, add a dimension and join it as a player", async () => {
     await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
     // TODO: add ability to pay for players from realm master account
     await airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
@@ -42,9 +42,9 @@ describe("Test simple journey", () => {
       .rpc();
     await confirmTransaction(tx);
 
-    // Add the location
+    // Add the dimension
     tx = await program.methods
-      .addRealmLocation(realmId, location.id, location.name, location.tileset, location.tilemap)
+      .addRealmDimension(realmId, dimension.id, dimension.name, dimension.tileset, dimension.tilemap)
       .accounts({
         master: realmMaster.publicKey,
       })
@@ -54,7 +54,7 @@ describe("Test simple journey", () => {
 
     // Set the starting point for the realm
     tx = await program.methods
-      .setRealmStartingPoint(realmId, location.id, startingPosition)
+      .setRealmStartingPoint(realmId, dimension.id, startingPosition)
       .accounts({
         master: realmMaster.publicKey,
       })
@@ -76,7 +76,7 @@ describe("Test simple journey", () => {
     var journeyAccount = await program.account.journey.fetch(journeyPDA);
     expect(journeyAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
     expect(journeyAccount.player.toBase58()).to.equal(player.publicKey.toBase58());
-    expect(journeyAccount.location.toBase58()).to.equal(locationPDA.toBase58());
+    expect(journeyAccount.dimension.toBase58()).to.equal(dimensionPDA.toBase58());
     expect(journeyAccount.position.x).to.equal(startingPosition.x);
     expect(journeyAccount.position.y).to.equal(startingPosition.y);
   });
