@@ -26,7 +26,7 @@ macro_rules! realm_dimension_space {
         // From https://book.anchor-lang.com/anchor_references/space.html
         let mut total_area_size = 0;
         for area in $areas {
-            let area: &RealmDimensionArea = area;
+            let area: &RealmDimensionArea = &area;
             total_area_size += 4 + area.name.len();                         // name: String (4 bytes prefix + content)
             total_area_size += std::mem::size_of::<crate::state::Rect>();   // area: Rect (fixed size)
             total_area_size += 4 + area.tileset.len();                      // tileset: String (4 bytes prefix + content)

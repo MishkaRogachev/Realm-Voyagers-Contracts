@@ -19,8 +19,38 @@ describe("Test simple journey", () => {
   const dimension = {
     id: "dungeon_1",
     name: "Dungeon",
-    tilemap: "https://example.com/dungeon-map-1",
-    tileset: "https://example.com/dungeon-tileset"
+    areas: [
+      {
+        "name": "Test Area 1",
+        "area": {
+          "topLeft": {
+            "x": 0,
+            "y": 0
+          },
+          "bottomRight": {
+            "x": 100,
+            "y": 100
+          }
+        },
+        "tileset": "https://example.com/tileset_1.png",
+        "tilemap": "https://example.com/tilemap.json"
+      },
+      {
+        "name": "Test Area 2",
+        "area": {
+          "topLeft": {
+            "x": 0,
+            "y": 100
+          },
+          "bottomRight": {
+            "x": 150,
+            "y": 100
+          }
+        },
+        "tileset": "https://example.com/tileset_2.png",
+        "tilemap": "https://example.com/tilemap.json"
+      },
+    ]
   };
   const startingPosition = { x: 10, y: -13 };
 
@@ -44,7 +74,7 @@ describe("Test simple journey", () => {
 
     // Add the dimension
     tx = await program.methods
-      .addRealmDimension(realmId, dimension.id, dimension.name)
+      .addRealmDimension(realmId, dimension.id, dimension.name, [])
       .accounts({
         master: realmMaster.publicKey,
       })

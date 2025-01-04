@@ -6,7 +6,7 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, dimension_id: String, name: String)]
+#[instruction(realm_id: String, dimension_id: String, name: String, areas: Vec<RealmDimensionArea>)]
 pub struct AddRealmDimension<'info> {
     #[account(
         mut,
@@ -25,7 +25,7 @@ pub struct AddRealmDimension<'info> {
     #[account(
         init,
         payer = master,
-        space = crate::realm_dimension_space!(name, vec![]),
+        space = crate::realm_dimension_space!(name, &areas),
         seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump
     )]
@@ -47,6 +47,7 @@ pub fn add_realm_dimension(
     _realm_id: String,
     _dimension_id: String,
     name: String,
+    areas: Vec<RealmDimensionArea>,
 ) -> Result<()> {
     require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
 
@@ -55,8 +56,8 @@ pub fn add_realm_dimension(
 
     dimension.realm = realm.key();
     dimension.owner = *ctx.accounts.master.key;
-
     dimension.name = name.clone();
+    dimension.areas = areas;
 
     realm.dimensions.push(dimension.key());
     if realm.starting_dimension.is_none() {
@@ -74,8 +75,8 @@ pub fn add_realm_dimension(
 }
 
 #[derive(Accounts)]
-#[instruction(realm_id: String, dimension_id: String, name: String)]
-pub struct RenameRealmDimension<'info> {
+#[instruction(realm_id: String, dimension_id: String, name: String, areas: Vec<RealmDimensionArea>)]
+pub struct UpdateRealmDimension<'info> {
     #[account(
         mut,
         seeds = [REALM_SEED, realm_id.as_bytes()],
@@ -87,7 +88,7 @@ pub struct RenameRealmDimension<'info> {
         mut,
         seeds = [DIMENSION_SEED, realm_id.as_bytes(), dimension_id.as_bytes()],
         bump,
-        realloc = crate::realm_dimension_space!(name, vec![]),
+        realloc = crate::realm_dimension_space!(name, &areas),
         realloc::payer = master,
         realloc::zero = false
     )]
@@ -104,21 +105,23 @@ pub struct RenameRealmDimension<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn rename_realm_dimension(
-    ctx: Context<RenameRealmDimension>,
+pub fn update_realm_dimension(
+    ctx: Context<UpdateRealmDimension>,
     _realm_id: String,
     _dimension_id: String,
     name: String,
+    areas: Vec<RealmDimensionArea>,
 ) -> Result<()> {
     require!(name.len() <= MAX_NAME_LEN, ErrorCode::NameTooLong);
 
     let dimension = &mut ctx.accounts.dimension;
     dimension.name = name.clone();
+    dimension.areas = areas;
 
     emit!(RealmDimensionEvent {
         realm_pubkey: ctx.accounts.realm.key(),
         dimension_pubkey: dimension.key(),
-        event_type: RealmDimensionEventType::DimensionRenamed { name },
+        event_type: RealmDimensionEventType::DimensionUpdated { name },
     });
 
     Ok(())

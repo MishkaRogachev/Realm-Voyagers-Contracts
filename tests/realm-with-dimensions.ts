@@ -15,10 +15,26 @@ describe("Test realm with dimensions", () => {
   // Realm & dimension datas
   const realmId = "realm_with_dimensions";
   const realmDescription = { name: "Test Realm", details: "A test realm details", logo: "https://example.com/logo123" };
+  const exampleArea = {
+    "name": "Example Area",
+    "area": {
+      "topLeft": {
+        "x": 0,
+        "y": 0
+      },
+      "bottomRight": {
+        "x": 100,
+        "y": 100
+      }
+    },
+    "tileset": "https://example.com/tileset.png",
+    "tilemap": "https://example.com/tilemap.json"
+  }
+
   var dimensions = [
-    { id: "rat_castle", name: "Rat Castle" },
-    { id: "dungeon_1", name: "Synth Dungeon" },
-    { id: "spaceship", name: "Witchcraft Spaceship" },
+    { id: "rat_castle", name: "Rat Castle", areas: [exampleArea] },
+    { id: "dungeon_1", name: "Synth Dungeon", areas: [] },
+    { id: "spaceship", name: "Witchcraft Spaceship", areas: [] },
   ];
 
   // PDAs
@@ -49,7 +65,7 @@ describe("Test realm with dimensions", () => {
       const dimensionPDA = dimensionPDAs[i];
 
       const tx = await program.methods
-        .addRealmDimension(realmId, dimension.id, dimension.name)
+        .addRealmDimension(realmId, dimension.id, dimension.name, dimension.areas)
         .accounts({
           master: realmMaster.publicKey,
         })
@@ -61,6 +77,7 @@ describe("Test realm with dimensions", () => {
       var dimensionAccount = await program.account.realmDimension.fetch(dimensionPDA);
       expect(dimensionAccount.name).to.equal(dimension.name);
       expect(dimensionAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
+      expect(dimensionAccount.areas).to.deep.equal(dimension.areas);
 
       // Verify an add dimension event is emitted
       eventsCount++;
@@ -72,10 +89,10 @@ describe("Test realm with dimensions", () => {
       expect(realmAccount.dimensions[i].toBase58()).to.equal(dimensionPDA.toBase58());
     }
 
-    // Try to rename unexisting dimension
+    // Try to update unexisting dimension
     try {
       tx = await program.methods
-        .renameRealmDimension(realmId, "unexisting_dimension", "New Name")
+        .updateRealmDimension(realmId, "unexisting_dimension", "New Name", [])
         .accounts({
           master: realmMaster.publicKey,
         })
@@ -86,11 +103,11 @@ describe("Test realm with dimensions", () => {
       expect(err.error.errorCode.code).to.equal("AccountNotInitialized");
     }
 
-    // Try to rename dimension with wrong owner
+    // Try to update dimension with wrong owner
     try {
       const pest = anchor.web3.Keypair.generate();
       tx = await program.methods
-        .renameRealmDimension(realmId, dimensions[0].id, "New Name")
+        .updateRealmDimension(realmId, dimensions[0].id, "New Name", [])
         .accounts({
           master: pest.publicKey,
         })
@@ -107,11 +124,12 @@ describe("Test realm with dimensions", () => {
     // Update dungeon dimension
     dimensions[1] = {
       id: "dungeon_1",
-      name: "Updated Synth Dungeon"
+      name: "Updated Synth Dungeon",
+      areas: [exampleArea]
     };
 
     tx = await program.methods
-      .renameRealmDimension(realmId, dimensions[1].id, dimensions[1].name)
+      .updateRealmDimension(realmId, dimensions[1].id, dimensions[1].name, dimensions[1].areas)
       .accounts({
         master: realmMaster.publicKey,
       })
@@ -122,7 +140,7 @@ describe("Test realm with dimensions", () => {
     // Verify an update dimension event is emitted
     eventsCount++;
     expect(events.length).to.equal(eventsCount);
-    expect(events[eventsCount - 1].eventType.dimensionRenamed.name).to.equal(dimensions[1].name);
+    expect(events[eventsCount - 1].eventType.dimensionUpdated.name).to.equal(dimensions[1].name);
 
     // Delete spaceship dimension
     tx = await program.methods
@@ -153,6 +171,7 @@ describe("Test realm with dimensions", () => {
     dimensionAccount = await program.account.realmDimension.fetch(dimensionPDAs[1]);
     expect(dimensionAccount.name).to.equal(dimensions[1].name);
     expect(dimensionAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
+    expect(dimensionAccount.areas).to.deep.equal(dimensions[1].areas);
 
     // Third dimension should be deleted
     try {

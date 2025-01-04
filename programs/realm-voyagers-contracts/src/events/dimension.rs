@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum RealmDimensionEventType {
     DimensionAdded { name: String },
-    DimensionRenamed { name: String },
+    DimensionUpdated { name: String },
     DimensionRemoved {},
 }
 

@@ -66,17 +66,19 @@ pub mod realm_voyagers {
         realm_id: String,
         dimension_id: String,
         name: String,
+        areas: Vec<state::RealmDimensionArea>,
     ) -> Result<()> {
-        dimensions::add_realm_dimension(ctx, realm_id, dimension_id, name)
+        dimensions::add_realm_dimension(ctx, realm_id, dimension_id, name, areas)
     }
 
-    pub fn rename_realm_dimension(
-        ctx: Context<RenameRealmDimension>,
+    pub fn update_realm_dimension(
+        ctx: Context<UpdateRealmDimension>,
         realm_id: String,
         dimension_id: String,
         name: String,
+        areas: Vec<state::RealmDimensionArea>,
     ) -> Result<()> {
-        dimensions::rename_realm_dimension(ctx, realm_id, dimension_id, name)
+        dimensions::update_realm_dimension(ctx, realm_id, dimension_id, name, areas)
     }
 
     pub fn remove_realm_dimension(
