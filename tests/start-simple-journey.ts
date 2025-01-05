@@ -59,41 +59,44 @@ describe("Test simple journey", () => {
   const dimensionPDA = getDimensionPDA(realmId, dimension.id, program);
   const journeyPDA = getJourneyPDA(realmId, player.publicKey, program);
 
-  it("Create realm, add a dimension and join it as a player", async () => {
+  it("Create the realm", async () => {
     await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
-    // TODO: add ability to pay for players from realm master account
-    await airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
 
-    // Create the realm
     let tx = await program.methods
       .createRealm(realmId, realmDescription)
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
     await confirmTransaction(tx);
+  });
 
-    // Add the dimension
-    tx = await program.methods
-      .addRealmDimension(realmId, dimension.id, dimension.name, [])
+  it("Add the dimension", async () => {
+    let tx = await program.methods
+      .addRealmDimension(realmId, dimension.id, dimension.name, dimension.areas)
       .accounts({
         master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
     await confirmTransaction(tx);
+  });
 
-    // Set the starting point for the realm
-    tx = await program.methods
-      .setRealmStartingPoint(realmId, dimension.id, startingPosition)
-      .accounts({
+  it("Set the starting point", async () => {
+    let tx = await program.methods
+    .setRealmStartingPoint(realmId, dimension.id, startingPosition)
+    .accounts({
         master: realmMaster.publicKey,
-      })
-      .signers([realmMaster])
-      .rpc();
+    })
+    .signers([realmMaster])
+    .rpc();
     await confirmTransaction(tx);
+  });
 
-    // Join the realm as a player
-    tx = await program.methods
+  it("Join the realm as a player", async () => {
+    // TODO: add ability to pay for players from realm master account
+    await airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+
+    const tx = await program.methods
       .startJourney(realmId)
       .accounts({
         player: player.publicKey,
@@ -102,7 +105,6 @@ describe("Test simple journey", () => {
       .rpc();
     await confirmTransaction(tx);
 
-    // Fetch & assert journey
     var journeyAccount = await program.account.journey.fetch(journeyPDA);
     expect(journeyAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
     expect(journeyAccount.player.toBase58()).to.equal(player.publicKey.toBase58());

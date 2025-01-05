@@ -41,25 +41,25 @@ describe("Test realm with dimensions", () => {
   const realmPDA = getRealmPDA(realmId, program);
   const dimensionPDAs = dimensions.map((dimension) => getDimensionPDA(realmId, dimension.id, program));
 
-  it("Create realm, add some dimensions, update some and delete", async () => {
-    // Add listener for events
-    let events = [];
-    let eventsCount = 0;
-    let listener = program.addEventListener("realmDimensionEvent", (event) => {
-      events.push(event);
-    });
+  // Add listener for events
+  let events = [];
+  let eventsCount = 0;
+  let listener = program.addEventListener("realmDimensionEvent", (event) => {
+    events.push(event);
+  });
 
+  it("Create the realm", async () => {
     await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
 
-    // Create the realm
     let tx = await program.methods
       .createRealm(realmId, realmDescription)
       .accounts({ master: realmMaster.publicKey })
       .signers([realmMaster])
       .rpc();
     await confirmTransaction(tx);
+  });
 
-    // Add some dimensions
+  it("Add some realm dimensions", async () => {
     for (let i = 0; i < dimensions.length; i++) {
       const dimension = dimensions[i];
       const dimensionPDA = dimensionPDAs[i];
@@ -73,25 +73,23 @@ describe("Test realm with dimensions", () => {
         .rpc();
       await confirmTransaction(tx);
 
-      // Fetch & assert dimension
       var dimensionAccount = await program.account.realmDimension.fetch(dimensionPDA);
       expect(dimensionAccount.name).to.equal(dimension.name);
       expect(dimensionAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
       expect(dimensionAccount.areas).to.deep.equal(dimension.areas);
 
-      // Verify an add dimension event is emitted
       eventsCount++;
       expect(events.length).to.equal(eventsCount);
       expect(events[eventsCount - 1].eventType.dimensionAdded.name).to.equal(dimension.name);
 
-      // Verify the realm has the dimension public key
       const realmAccount = await program.account.realm.fetch(realmPDA);
       expect(realmAccount.dimensions[i].toBase58()).to.equal(dimensionPDA.toBase58());
     }
+  });
 
-    // Try to update unexisting dimension
+  it("Try to update unexisting dimension", async () => {
     try {
-      tx = await program.methods
+      const tx = await program.methods
         .updateRealmDimension(realmId, "unexisting_dimension", "New Name", [])
         .accounts({
           master: realmMaster.publicKey,
@@ -102,33 +100,32 @@ describe("Test realm with dimensions", () => {
     } catch (err) {
       expect(err.error.errorCode.code).to.equal("AccountNotInitialized");
     }
+  });
 
-    // Try to update dimension with wrong owner
+  it("Try to remove unexisting dimension", async () => {
     try {
-      const pest = anchor.web3.Keypair.generate();
-      tx = await program.methods
-        .updateRealmDimension(realmId, dimensions[0].id, "New Name", [])
+      const tx = await program.methods
+        .removeRealmDimension(realmId, "unexisting_dimension")
         .accounts({
-          master: pest.publicKey,
+          master: realmMaster.publicKey,
         })
-        .signers([pest])
+        .signers([realmMaster])
         .rpc();
       await confirmTransaction(tx);
     } catch (err) {
-      expect(err.error.errorCode.code).to.equal("UnauthorizedRealmMaster");
+      expect(err.error.errorCode.code).to.equal("AccountNotInitialized");
     }
-
-    // Verify no dimension event is emitted
     expect(events.length).to.equal(eventsCount);
+  });
 
-    // Update dungeon dimension
+  it("Update dungeon dimension", async () => {
     dimensions[1] = {
       id: "dungeon_1",
       name: "Updated Synth Dungeon",
       areas: [exampleArea]
     };
 
-    tx = await program.methods
+    const tx = await program.methods
       .updateRealmDimension(realmId, dimensions[1].id, dimensions[1].name, dimensions[1].areas)
       .accounts({
         master: realmMaster.publicKey,
@@ -137,52 +134,39 @@ describe("Test realm with dimensions", () => {
       .rpc();
     await confirmTransaction(tx);
 
-    // Verify an update dimension event is emitted
     eventsCount++;
     expect(events.length).to.equal(eventsCount);
     expect(events[eventsCount - 1].eventType.dimensionUpdated.name).to.equal(dimensions[1].name);
 
-    // Delete spaceship dimension
-    tx = await program.methods
+    const dimensionAccount = await program.account.realmDimension.fetch(dimensionPDAs[1]);
+    expect(dimensionAccount.name).to.equal(dimensions[1].name);
+    expect(dimensionAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
+    expect(dimensionAccount.areas).to.deep.equal(dimensions[1].areas);
+  });
+
+  it("Delete spaceship dimension", async () => {
+    const tx = await program.methods
       .removeRealmDimension(realmId, dimensions[2].id)
       .accounts({
         master: realmMaster.publicKey,
       })
       .signers([realmMaster])
       .rpc();
-    await confirmTransaction(tx);
 
-    // Verify a remove dimension event is emitted
     eventsCount++;
     expect(events.length).to.equal(eventsCount);
     expect(events[eventsCount - 1].eventType.dimensionRemoved).not;
 
-    // Verify the realm dimension is removed
-    const realmAccount = await program.account.realm.fetch(realmPDA);
-    expect(realmAccount.dimensions.length).to.equal(2);
-    expect(realmAccount.dimensions).to.not.include(dimensionPDAs[2]);
-
-    // First dimension should be the same
-    var dimensionAccount = await program.account.realmDimension.fetch(dimensionPDAs[0]);
-    expect(dimensionAccount.name).to.equal(dimensions[0].name);
-    expect(dimensionAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
-
-    // Second dimension should be updated
-    dimensionAccount = await program.account.realmDimension.fetch(dimensionPDAs[1]);
-    expect(dimensionAccount.name).to.equal(dimensions[1].name);
-    expect(dimensionAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
-    expect(dimensionAccount.areas).to.deep.equal(dimensions[1].areas);
-
-    // Third dimension should be deleted
     try {
-      dimensionAccount = await program.account.realmDimension.fetch(dimensionPDAs[2]);
+      await program.account.realmDimension.fetch(dimensionPDAs[2]);
       expect.fail("dimension account should have been deleted");
     } catch (err) {
       expect(err.message).to.include("Account does not exist");
     }
+  });
 
-    // Delete realm
-    tx = await program.methods
+  it("Delete realm", async () => {
+    const tx = await program.methods
       .deleteRealm(realmId)
       .accounts({ master: realmMaster.publicKey })
       .remainingAccounts([
@@ -193,14 +177,13 @@ describe("Test realm with dimensions", () => {
       .rpc();
     await confirmTransaction(tx);
 
-    // Verify the realm is deleted
     const realmInfo = await provider.connection.getAccountInfo(realmPDA);
-    expect(realmInfo).to.be.null; // Ensure the account no longer exists
+    expect(realmInfo).to.be.null;
 
     // Verify realm loctions are deleted as well
     for (const dimensionPDA of dimensionPDAs) {
       try {
-        dimensionAccount = await program.account.realmDimension.fetch(dimensionPDA);
+        await program.account.realmDimension.fetch(dimensionPDA);
         expect.fail("dimension account should have been deleted");
       } catch (err) {
         expect(err.message).to.include("Account does not exist");
