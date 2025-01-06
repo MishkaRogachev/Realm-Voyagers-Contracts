@@ -146,36 +146,31 @@ pub fn transfer_realm_ownership(
 ) -> Result<()> {
     let realm = &mut ctx.accounts.realm;
 
-    let old_owner = realm
+    let old_owner_index = realm
         .masters
         .iter()
-        .find(|master| master.pubkey == *ctx.accounts.master.key)
-        .cloned();
+        .position(|master| master.pubkey == *ctx.accounts.master.key)
+        .ok_or(ErrorCode::UnauthorizedRealmMaster)?;
 
-    let new_owner = realm
+    let new_owner_index = realm
         .masters
         .iter()
-        .find(|master| master.pubkey == new_owner_pubkey)
-        .cloned();
+        .position(|master| master.pubkey == new_owner_pubkey)
+        .ok_or(ErrorCode::RealmMasterNotFound)?;
 
-    require!(old_owner.is_some(), ErrorCode::UnauthorizedRealmMaster); // Double check, should never happen
-    require!(new_owner.is_some(), ErrorCode::RealmMasterNotFound);
-
-    realm.masters.iter_mut().for_each(|master| {
-        if master.pubkey == new_owner_pubkey {
-            master.role = RealmMasterRole::Owner;
-        } else if master.pubkey == *ctx.accounts.master.key {
-            master.role = RealmMasterRole::Admin;
-        }
-    });
+    // Current roles should be checked via constraints
+    realm.masters[old_owner_index].role = RealmMasterRole::Admin;
+    realm.masters[new_owner_index].role = RealmMasterRole::Owner;
     realm.updated_at = Clock::get()?.unix_timestamp;
 
-    // Emit event
+    let old_owner = realm.masters[old_owner_index].clone();
+    let new_owner = realm.masters[new_owner_index].clone();
+
     emit!(RealmEvent {
         realm_pubkey: realm.key(),
         event_type: RealmEventType::RealmOwnershipTransferred {
-            old_owner: old_owner.unwrap(),
-            new_owner: new_owner.unwrap(),
+            old_owner: old_owner,
+            new_owner: new_owner,
         },
     });
 

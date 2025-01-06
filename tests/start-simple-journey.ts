@@ -1,8 +1,11 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { RealmVoyagers } from "../target/types/realm_voyagers";
 import { expect } from "chai";
-import { airdrop, confirmTransaction, getRealmPDA, getDimensionPDA, getJourneyPDA } from "./helpers";
+
+import { RealmVoyagers } from "../target/types/realm_voyagers";
+
+import * as helper from "./helpers";
+import * as steps from "./common-steps";
 
 describe("Test simple journey", () => {
   const provider = anchor.AnchorProvider.env();
@@ -13,7 +16,7 @@ describe("Test simple journey", () => {
   const realmMaster = anchor.web3.Keypair.generate();
   const player = anchor.web3.Keypair.generate();
 
-  // Realm & dimension datas
+  // Realm data
   const realmId = "journey_realm";
   const realmDescription = { name: "Test Realm", details: "A test realm details", logo: "https://example.com/logo123" };
   const dimension = {
@@ -54,32 +57,29 @@ describe("Test simple journey", () => {
   };
   const startingPosition = { x: 10, y: -13 };
 
-  // PDAs
-  const realmPDA = getRealmPDA(realmId, program);
-  const dimensionPDA = getDimensionPDA(realmId, dimension.id, program);
-  const journeyPDA = getJourneyPDA(realmId, player.publicKey, program);
+  // Listen events
+  let listeners = [];
+  let events = [];
 
-  it("Airdrop to realm master", async () => await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
-
-  it("Create the realm", async () => {
-    let tx = await program.methods
-      .createRealm(realmId, realmDescription)
-      .accounts({ master: realmMaster.publicKey })
-      .signers([realmMaster])
-      .rpc();
-    await confirmTransaction(tx);
+  before(async () => {
+    listeners.push(program.addEventListener("realmEvent", (event) => {
+      events.push(event);
+    }));
+    listeners.push(program.addEventListener("realmDimensionEvent", (event) => {
+      events.push(event);
+    }));
   });
 
-  it("Add the dimension", async () => {
-    let tx = await program.methods
-      .addRealmDimension(realmId, dimension.id, dimension.name, dimension.areas)
-      .accounts({
-        master: realmMaster.publicKey,
-      })
-      .signers([realmMaster])
-      .rpc();
-    await confirmTransaction(tx);
+  after(async () => {
+    for (const listener of listeners) {
+      await program.removeEventListener(listener);
+    }
   });
+
+  it("Airdrop to realm master", async () => await helper.airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
+  it("Create the realm", async () => await steps.createRealm(realmMaster, program, realmId, realmDescription, events));
+  it("Add the dimension", async () => steps.addRealmDimension(realmMaster, program, realmId, dimension, events));
+
 
   it("Set the starting point", async () => {
     let tx = await program.methods
@@ -89,11 +89,11 @@ describe("Test simple journey", () => {
     })
     .signers([realmMaster])
     .rpc();
-    await confirmTransaction(tx);
+    await helper.confirmTransaction(tx);
   });
 
   // TODO: add ability to pay for players from realm master account
-  it("Airdrop to player", async () => await airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
+  it("Airdrop to player", async () => await helper.airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
   it("Join the realm as a player", async () => {
     const tx = await program.methods
@@ -103,9 +103,12 @@ describe("Test simple journey", () => {
       })
       .signers([player])
       .rpc();
-    await confirmTransaction(tx);
+    await helper.confirmTransaction(tx);
 
-    var journeyAccount = await program.account.journey.fetch(journeyPDA);
+    const journeyPDA = helper.getJourneyPDA(realmId, player.publicKey, program);
+    const realmPDA = helper.getRealmPDA(realmId, program);
+    const dimensionPDA = helper.getDimensionPDA(realmId, dimension.id, program);
+    const journeyAccount = await program.account.journey.fetch(journeyPDA);
     expect(journeyAccount.realm.toBase58()).to.equal(realmPDA.toBase58());
     expect(journeyAccount.player.toBase58()).to.equal(player.publicKey.toBase58());
     expect(journeyAccount.dimension.toBase58()).to.equal(dimensionPDA.toBase58());

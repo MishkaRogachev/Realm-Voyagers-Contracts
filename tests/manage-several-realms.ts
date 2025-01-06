@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
+
 import { RealmVoyagers } from "../target/types/realm_voyagers";
 
 import * as helper from "./helpers";
@@ -13,7 +14,7 @@ describe("Manage several realms", () => {
   const program = anchor.workspace.RealmVoyagers as Program<RealmVoyagers>;
   const realmMaster = anchor.web3.Keypair.generate();
 
-  // Realm datas
+  // Realms data
   const firstRealmId = "realm_id_1";
   const secondRealmId = "realm_id_2";
   const firstRealmDescription = { name: "Test Realm 1", details: "A test realm", logo: "https://example.com/logo1" };
@@ -38,6 +39,6 @@ describe("Manage several realms", () => {
   it("Create the first realm", async () => await steps.createRealm(realmMaster, program, firstRealmId, firstRealmDescription, events));
   it("Create the second realm", async () => await steps.createRealm(realmMaster, program, secondRealmId, secondRealmDescription, events));
   it("Update first realm", async () => await steps.updateRealmDescription(realmMaster, program, firstRealmId, updatedDescription, events));
-  it("Delete the first realm", async () => await steps.deleteRealm(realmMaster, program, firstRealmId, events));
-  it("Delete the second realm", async () => await steps.deleteRealm(realmMaster, program, secondRealmId, events));
+  it("Delete the first realm", async () => await steps.deleteRealm(realmMaster, program, firstRealmId, [], events));
+  it("Delete the second realm", async () => await steps.deleteRealm(realmMaster, program, secondRealmId, [], events));
 });
