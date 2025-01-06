@@ -21,9 +21,9 @@ describe("Realm ownership flows", () => {
   // Realm PDA
   const realmPDA = getRealmPDA(realmId, program);
 
-  it("Alice creates a realm", async () => {
-    await airdrop(alice.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+  it("Airdrop to Alice", async () => await airdrop(alice.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
+  it("Alice creates a realm", async () => {
     let tx = await program.methods
       .createRealm(realmId, realmDescription)
       .accounts({
@@ -34,9 +34,9 @@ describe("Realm ownership flows", () => {
     await confirmTransaction(tx);
   });
 
-  it("Bob tries to update the realm, and it fails", async () => {
-    await airdrop(bob.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+  it("Airdrop to Bob", async () => await airdrop(bob.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
+  it("Bob tries to update the realm, and it fails", async () => {
     try {
       let tx = await program.methods
         .updateRealmDescription(realmId, updatedRealmDescription)

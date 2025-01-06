@@ -48,9 +48,9 @@ describe("Test realm with dimensions", () => {
     events.push(event);
   });
 
-  it("Create the realm", async () => {
-    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+  it("Airdrop to realm master", async () => await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
+  it("Create the realm", async () => {
     let tx = await program.methods
       .createRealm(realmId, realmDescription)
       .accounts({ master: realmMaster.publicKey })

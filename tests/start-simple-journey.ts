@@ -59,9 +59,9 @@ describe("Test simple journey", () => {
   const dimensionPDA = getDimensionPDA(realmId, dimension.id, program);
   const journeyPDA = getJourneyPDA(realmId, player.publicKey, program);
 
-  it("Create the realm", async () => {
-    await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+  it("Airdrop to realm master", async () => await airdrop(realmMaster.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
+  it("Create the realm", async () => {
     let tx = await program.methods
       .createRealm(realmId, realmDescription)
       .accounts({ master: realmMaster.publicKey })
@@ -92,10 +92,10 @@ describe("Test simple journey", () => {
     await confirmTransaction(tx);
   });
 
-  it("Join the realm as a player", async () => {
-    // TODO: add ability to pay for players from realm master account
-    await airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL);
+  // TODO: add ability to pay for players from realm master account
+  it("Airdrop to player", async () => await airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
+  it("Join the realm as a player", async () => {
     const tx = await program.methods
       .startJourney(realmId)
       .accounts({
