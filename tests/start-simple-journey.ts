@@ -4,8 +4,8 @@ import { expect } from "chai";
 
 import { RealmVoyagers } from "../target/types/realm_voyagers";
 
-import * as helper from "./helpers";
-import * as steps from "./common-steps";
+import * as helper from "./utils/helpers";
+import * as steps from "./utils/common-steps";
 
 describe("Test simple journey", () => {
   const provider = anchor.AnchorProvider.env();

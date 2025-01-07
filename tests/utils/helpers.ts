@@ -37,4 +37,3 @@ export async function confirmTransaction(tx: string) {
     signature: tx,
   });
 }
-

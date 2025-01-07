@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { expect } from "chai";
 
-import { RealmVoyagers } from "../target/types/realm_voyagers";
+import { RealmVoyagers } from "../../target/types/realm_voyagers";
 import * as helper from "./helpers";
 
 export async function createRealm(
