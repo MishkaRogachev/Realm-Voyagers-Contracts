@@ -8,7 +8,7 @@ pub struct HeroStats {
     pub constitution: u64, // Health and physical endurance
     pub intelligence: u64, // Magical power and logical reasoning
     pub wisdom: u64,       // Healing, perception, and magical defense
-    pub charisma: u64,     // Social skills, leadership, and summoning
+    pub charisma: u64,     // Social skills and leadership
     pub willpower: u64,    // Mental resilience and focus
 }
 

@@ -272,3 +272,31 @@ export async function removeRealmDimension(
   expect(event.dimensionPubkey.toBase58()).to.equal(dimensionPDA.toBase58());
   expect(event.realmPubkey.toBase58()).to.equal(realmPDA.toBase58());
 }
+
+export async function createHero(
+  player: anchor.web3.Keypair,
+  program: anchor.Program<RealmVoyagers>,
+  heroId: string,
+  description: any,
+  events: any[]
+) {
+  const heroPDA = helper.getHeroPDA(player.publicKey, heroId, program);
+
+  let tx = await program.methods
+    .createHero(heroId, description)
+    .accounts({ player: player.publicKey })
+    .signers([player])
+    .rpc();
+  await helper.confirmTransaction(tx);
+
+  const heroAccount = await program.account.hero.fetch(heroPDA);
+  expect(heroAccount.description).to.deep.equal(description);
+  expect(heroAccount.createdAt).to.be.not.null
+  expect(heroAccount.updatedAt.eq(heroAccount.createdAt)).to.be.true;
+
+  expect(events.length).to.be.above(0);
+  let event = events[events.length - 1];
+  expect(event.eventType.heroCreated.description).to.deep.equal(description);
+  expect(event.heroPubkey.toBase58()).to.equal(heroPDA.toBase58());
+  expect(event.player.toBase58()).to.equal(player.publicKey.toBase58());
+}

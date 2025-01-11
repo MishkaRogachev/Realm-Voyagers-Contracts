@@ -98,6 +98,15 @@ pub mod realm_voyagers {
         dimensions::set_realm_starting_point(ctx, realm_id, dimension_id, position)
     }
 
+    // Heroes
+    pub fn create_hero(
+        ctx: Context<CreateHero>,
+        hero_id: String,
+        description: state::HeroDescription,
+    ) -> Result<()> {
+        heroes::create_hero(ctx, hero_id, description)
+    }
+
     // Journey
     pub fn start_journey(ctx: Context<StartJourney>, realm_id: String) -> Result<()> {
         journeys::start_journey(ctx, realm_id)

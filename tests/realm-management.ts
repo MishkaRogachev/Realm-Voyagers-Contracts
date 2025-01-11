@@ -7,7 +7,7 @@ import { RealmVoyagers } from "../target/types/realm_voyagers";
 import * as helper from "./utils/helpers";
 import * as steps from "./utils/common-steps";
 
-describe("Realm CRUD actions", () => {
+describe("Realm Management", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 

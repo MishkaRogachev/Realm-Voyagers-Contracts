@@ -24,6 +24,16 @@ export function getJourneyPDA(realmId: string, player: anchor.web3.PublicKey, pr
   return pda;
 }
 
+export function getHeroPDA(player: anchor.web3.PublicKey, heroId: string, program: anchor.Program<any>) {
+  const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("hero"),  player.toBuffer(), Buffer.from(heroId)],
+    program.programId
+  );
+  return pda;
+}
+
+//seeds = [HERO_SEED, player.key().as_ref(), hero_id.as_bytes()],
+
 export async function airdrop(publicKey: anchor.web3.PublicKey, lamports: number) {
   let airdropTx = await anchor.getProvider().connection.requestAirdrop(publicKey, lamports);
   await confirmTransaction(airdropTx);
