@@ -102,9 +102,11 @@ pub mod realm_voyagers {
     pub fn create_hero(
         ctx: Context<CreateHero>,
         hero_id: String,
-        description: state::HeroDescription,
+        name: String,
+        graphics: String,
+        lore: String,
     ) -> Result<()> {
-        heroes::create_hero(ctx, hero_id, description)
+        heroes::create_hero(ctx, hero_id, name, graphics, lore)
     }
 
     // Journey

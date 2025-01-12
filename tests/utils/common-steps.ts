@@ -274,29 +274,31 @@ export async function removeRealmDimension(
 }
 
 export async function createHero(
-  player: anchor.web3.Keypair,
+  master: anchor.web3.Keypair,
   program: anchor.Program<RealmVoyagers>,
   heroId: string,
-  description: any,
+  name: string,
+  graphics: string,
+  lore: string,
   events: any[]
 ) {
-  const heroPDA = helper.getHeroPDA(player.publicKey, heroId, program);
+  const heroPDA = helper.getHeroPDA(master.publicKey, heroId, program);
 
   let tx = await program.methods
-    .createHero(heroId, description)
-    .accounts({ player: player.publicKey })
-    .signers([player])
+    .createHero(heroId, name, graphics, lore)
+    .accounts({ master: master.publicKey })
+    .signers([master])
     .rpc();
   await helper.confirmTransaction(tx);
 
   const heroAccount = await program.account.hero.fetch(heroPDA);
-  expect(heroAccount.description).to.deep.equal(description);
+  expect(heroAccount.name).to.deep.equal(name);
+  expect(heroAccount.graphics).to.deep.equal(graphics);
+  expect(heroAccount.lore).to.deep.equal(lore);
   expect(heroAccount.createdAt).to.be.not.null
   expect(heroAccount.updatedAt.eq(heroAccount.createdAt)).to.be.true;
 
   expect(events.length).to.be.above(0);
   let event = events[events.length - 1];
-  expect(event.eventType.heroCreated.description).to.deep.equal(description);
-  expect(event.heroPubkey.toBase58()).to.equal(heroPDA.toBase58());
-  expect(event.player.toBase58()).to.equal(player.publicKey.toBase58());
+  expect(event.eventType.heroCreated.heroPubkey.toBase58()).to.deep.equal(heroPDA.toBase58());
 }

@@ -24,9 +24,9 @@ export function getJourneyPDA(realmId: string, player: anchor.web3.PublicKey, pr
   return pda;
 }
 
-export function getHeroPDA(player: anchor.web3.PublicKey, heroId: string, program: anchor.Program<any>) {
+export function getHeroPDA(master: anchor.web3.PublicKey, heroId: string, program: anchor.Program<any>) {
   const [pda, _] =  anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("hero"),  player.toBuffer(), Buffer.from(heroId)],
+    [Buffer.from("hero"), master.toBuffer(), Buffer.from(heroId)],
     program.programId
   );
   return pda;

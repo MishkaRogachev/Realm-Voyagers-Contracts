@@ -14,7 +14,9 @@ describe("Hero Management", () => {
 
   // Heroes data
   const heroId = "hero_id_1";
-  const heroDescription = { name: "Test Hero 1", details: "A test hero", logo: "https://example.com/logo1" };
+  const heroName = "Test Hero 1";
+  const heroGraphics = "https://example.com/graphics1";
+  const heroLore = "A test hero";
 
   // Listen events
   let listener = null;
@@ -32,6 +34,6 @@ describe("Hero Management", () => {
 
   it("Airdrop to player", async () => await helper.airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
-  it("Create the hero", async () => await steps.createHero(player, program, heroId, heroDescription, events));
+  it("Create the hero", async () => await steps.createHero(player, program, heroId, heroName, heroGraphics, heroLore, events));
 
 });
