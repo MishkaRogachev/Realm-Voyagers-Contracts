@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum HeroEventType {
     HeroCreated { hero_pubkey: Pubkey },
+    HeroUpdated { hero_pubkey: Pubkey },
 }
 
 #[event]

@@ -277,28 +277,49 @@ export async function createHero(
   master: anchor.web3.Keypair,
   program: anchor.Program<RealmVoyagers>,
   heroId: string,
-  name: string,
-  graphics: string,
-  lore: string,
+  description: any,
   events: any[]
 ) {
   const heroPDA = helper.getHeroPDA(master.publicKey, heroId, program);
 
   let tx = await program.methods
-    .createHero(heroId, name, graphics, lore)
+    .createHero(heroId, description)
     .accounts({ master: master.publicKey })
     .signers([master])
     .rpc();
   await helper.confirmTransaction(tx);
 
   const heroAccount = await program.account.hero.fetch(heroPDA);
-  expect(heroAccount.name).to.deep.equal(name);
-  expect(heroAccount.graphics).to.deep.equal(graphics);
-  expect(heroAccount.lore).to.deep.equal(lore);
+  expect(heroAccount.description).to.deep.equal(description);
   expect(heroAccount.createdAt).to.be.not.null
   expect(heroAccount.updatedAt.eq(heroAccount.createdAt)).to.be.true;
 
   expect(events.length).to.be.above(0);
   let event = events[events.length - 1];
   expect(event.eventType.heroCreated.heroPubkey.toBase58()).to.deep.equal(heroPDA.toBase58());
+}
+
+export async function updateHeroDescription(
+  master: anchor.web3.Keypair,
+  program: anchor.Program<RealmVoyagers>,
+  heroId: string,
+  description: any,
+  events: any[]
+) {
+  const heroPDA = helper.getHeroPDA(master.publicKey, heroId, program);
+
+  let tx = await program.methods
+    .updateHeroDescription(heroId, description)
+    .accounts({ master: master.publicKey })
+    .signers([master])
+    .rpc();
+  await helper.confirmTransaction(tx);
+
+  const heroAccount = await program.account.hero.fetch(heroPDA);
+  expect(heroAccount.description).to.deep.equal(description);
+  expect(heroAccount.updatedAt).not.to.be.equal(heroAccount.createdAt);
+
+  expect(events.length).to.be.above(0);
+  let event = events[events.length - 1];
+  expect(event.eventType.heroUpdated.heroPubkey.toBase58()).to.deep.equal(heroPDA.toBase58());
 }

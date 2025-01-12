@@ -5,12 +5,12 @@ use crate::events::*;
 use crate::state::*;
 
 #[derive(Accounts)]
-#[instruction(hero_id: String, name: String, graphics: String, lore: String)]
+#[instruction(hero_id: String, description: HeroDescription)]
 pub struct CreateHero<'info> {
     #[account(
         init,
         payer = master,
-        space = crate::hero_space!(name, graphics, lore),
+        space = crate::hero_space!(description),
         seeds = [HERO_SEED, master.key().as_ref(), hero_id.as_bytes()],
         bump
     )]
@@ -25,22 +25,56 @@ pub struct CreateHero<'info> {
 pub fn create_hero(
     ctx: Context<CreateHero>,
     _hero_id: String,
-    name: String,
-    graphics: String,
-    lore: String,
+    description: HeroDescription,
 ) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
 
     let hero = &mut ctx.accounts.hero;
     hero.master = *ctx.accounts.master.key;
-    hero.name = name;
-    hero.graphics = graphics;
-    hero.lore = lore;
+    hero.description = description;
+    // TODO: hero stats
     hero.created_at = now;
     hero.updated_at = now;
 
     emit!(HeroEvent {
         event_type: HeroEventType::HeroCreated {
+            hero_pubkey: hero.key()
+        },
+    });
+
+    Ok(())
+}
+
+#[derive(Accounts)]
+#[instruction(hero_id: String, description: HeroDescription)]
+pub struct UpdateHeroDescription<'info> {
+    #[account(
+        mut,
+        seeds = [HERO_SEED, master.key().as_ref(), hero_id.as_bytes()],
+        bump,
+        realloc = crate::hero_space!(description),
+        realloc::payer = master,
+        realloc::zero = false
+    )]
+    pub hero: Account<'info, Hero>,
+
+    #[account(mut)]
+    pub master: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+pub fn update_hero_description(
+    ctx: Context<UpdateHeroDescription>,
+    _hero_id: String,
+    description: HeroDescription,
+) -> Result<()> {
+    let hero = &mut ctx.accounts.hero;
+    hero.description = description;
+    hero.updated_at = Clock::get()?.unix_timestamp;
+
+    emit!(HeroEvent {
+        event_type: HeroEventType::HeroUpdated {
             hero_pubkey: hero.key()
         },
     });

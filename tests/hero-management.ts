@@ -14,9 +14,9 @@ describe("Hero Management", () => {
 
   // Heroes data
   const heroId = "hero_id_1";
-  const heroName = "Test Hero 1";
-  const heroGraphics = "https://example.com/graphics1";
-  const heroLore = "A test hero";
+  const heroDescription = { name: "Test Hero 1", graphics: "https://example.com/graphics1", lore: "A test hero" };
+  const heroStats = { strength: 10, dexterity: 5, intelligence: 3, charisma: 2, vitality: 8 };
+  const updatedHeroDescription = { name: "Updated Hero 1", graphics: "https://example.com/graphics1", lore: "An updated lore" };
 
   // Listen events
   let listener = null;
@@ -34,6 +34,7 @@ describe("Hero Management", () => {
 
   it("Airdrop to player", async () => await helper.airdrop(player.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL));
 
-  it("Create the hero", async () => await steps.createHero(player, program, heroId, heroName, heroGraphics, heroLore, events));
+  it("Create the hero", async () => await steps.createHero(player, program, heroId, heroDescription, events));
+  it("Update the hero", async () => await steps.updateHeroDescription(player, program, heroId, updatedHeroDescription, events));
 
 });

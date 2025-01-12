@@ -2,13 +2,18 @@ use anchor_lang::prelude::*;
 
 use crate::state::hero_stats::*;
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+pub struct HeroDescription {
+    pub name: String,     // Base name of the hero class
+    pub graphics: String, // URL or IPFS hash for the hero class graphics
+    pub lore: String,     // Background of the hero
+}
+
 #[account]
 pub struct Hero {
-    pub master: Pubkey,        // Owner of the hero class
-    pub name: String,          // Base name of the hero class
-    pub graphics: String,      // URL or IPFS hash for the hero class graphics
+    pub master: Pubkey, // Owner of the hero class
+    pub description: HeroDescription,
     pub base_stats: HeroStats, // Base stats for the hero class
-    pub lore: String,          // Background of the hero
 
     pub created_at: i64,
     pub updated_at: i64,
@@ -31,13 +36,13 @@ pub struct PlayerHero {
 
 #[macro_export]
 macro_rules! hero_space {
-    ($name:expr, $graphics:expr, $lore:expr) => {
+    ($description:expr) => {
         8 +                                 // discriminator
         32 +                                // master: pubkey
-        4 + $name.len() +                   // name: String prefix + content
-        4 + $graphics.len() +               // graphics: String prefix + content
+        4 + $description.name.len() +       // name: String prefix + content
+        4 + $description.graphics.len() +   // graphics: String prefix + content
+        4 + $description.lore.len() +       // lore: String prefix + content
         std::mem::size_of::<HeroStats>() +  // base_stats: HeroStats
-        4 + $lore.len() +                   // lore: String prefix + content
         8 +                                 // created_at: i64
         8                                   // updated_at: i64
     };
